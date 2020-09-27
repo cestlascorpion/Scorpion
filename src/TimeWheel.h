@@ -1,0 +1,72 @@
+/**
+ * A raw implementation of timewheel and its wrapper. 
+ *
+ */
+
+#pragma once
+
+#include <atomic>
+#include <chrono>
+#include <functional>
+#include <memory>
+#include <mutex>
+#include <thread>
+
+namespace scorpion {
+
+class TimeWheelRaw {
+public:
+    TimeWheelRaw();
+    ~TimeWheelRaw();
+
+    TimeWheelRaw(const TimeWheelRaw &) = delete;
+    TimeWheelRaw &operator=(const TimeWheelRaw &) = delete;
+
+public:
+    void Add(std::function<void() noexcept> &&cb, unsigned int interval, int loop) noexcept;
+    void Tick() noexcept;
+    void Dump() const noexcept;
+
+private:
+    struct Impl;
+    std::unique_ptr<Impl> _impl;
+};
+
+template <typename Resolution = std::chrono::seconds>
+class TimeWheel {
+public:
+    TimeWheel()
+        : _running(true)
+        , _twr(new TimeWheelRaw())
+        , _thread([this]() {
+            while (_running.load(std::memory_order_acquire)) {
+                std::this_thread::sleep_for(Resolution(1));
+                std::lock_guard<std::mutex> lock(_mutex);
+                _twr->Tick();
+            }
+        }) {}
+    ~TimeWheel() {
+        _running.store(false, std::memory_order_release);
+        if (_thread.joinable()) {
+            _thread.join();
+        }
+    }
+
+    TimeWheel(const TimeWheel &) = delete;
+    TimeWheel &operator=(const TimeWheel &) = delete;
+
+public:
+    void Add(std::function<void() noexcept> &&cb, unsigned int interval, int loop) noexcept {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _twr->Add(std::forward<std::function<void() noexcept>>(cb), interval, loop);
+    }
+
+private:
+    std::atomic<bool> _running;
+    std::unique_ptr<TimeWheelRaw> _twr;
+
+    std::mutex _mutex;
+    std::thread _thread;
+};
+
+} // namespace scorpion

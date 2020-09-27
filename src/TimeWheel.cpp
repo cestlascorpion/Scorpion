@@ -1,0 +1,94 @@
+#include "TimeWheel.h"
+
+#include <chrono>
+#include <list>
+#include <vector>
+
+namespace scorpion {
+
+using namespace std;
+using cbType = function<void() noexcept>;
+
+constexpr unsigned kTimeWheelSpan = 1;
+constexpr unsigned kTimeWheelSize = 10;
+
+struct CEvent {
+    unsigned _interval;
+    unsigned _rotation;
+    int _loop;
+    cbType _callback;
+
+    CEvent(unsigned interval, unsigned rotation, int loop, cbType &&cb)
+        : _interval(interval)
+        , _rotation(rotation)
+        , _loop(loop)
+        , _callback(forward<cbType>(cb)) {}
+
+    CEvent(const CEvent &) = delete;
+    CEvent &operator=(const CEvent &) = delete;
+};
+
+struct TimeWheelRaw::Impl {
+    const unsigned _span;
+    const unsigned _size;
+    unsigned _cursor;
+    vector<list<unique_ptr<CEvent>>> _slots;
+
+    explicit Impl(unsigned span, unsigned size)
+        : _span(span)
+        , _size(size)
+        , _cursor(0) {
+        _slots.resize(size);
+    }
+};
+} // namespace scorpion
+
+namespace scorpion {
+
+TimeWheelRaw::TimeWheelRaw()
+    : _impl(new Impl(kTimeWheelSpan, kTimeWheelSize)) {}
+
+TimeWheelRaw::~TimeWheelRaw() = default;
+
+void TimeWheelRaw::Add(cbType &&cb, unsigned interval, int loop) noexcept {
+    auto ticks = interval < _impl->_span ? 1u : interval / _impl->_span;
+    auto rotation = ticks / _impl->_size;
+    auto index = (_impl->_cursor + ticks % _impl->_size) % _impl->_size;
+    auto event = unique_ptr<CEvent>(new CEvent(interval, rotation, loop, forward<cbType>(cb)));
+    _impl->_slots[index].push_back(move(event));
+}
+
+void TimeWheelRaw::Tick() noexcept {
+    auto &list = _impl->_slots[_impl->_cursor];
+    for (auto iter = list.begin(); iter != list.end(); /*nothing*/) {
+        if ((*iter)->_rotation == 0) {
+            (*iter)->_callback();
+            if ((*iter)->_loop < 0) {
+                auto interval = (*iter)->_interval;
+                this->Add(move((*iter)->_callback), interval, -1);
+            } else {
+                auto loop = --(*iter)->_loop;
+                if (loop > 0) {
+                    auto interval = (*iter)->_interval;
+                    this->Add(move((*iter)->_callback), interval, loop);
+                }
+            }
+            iter = list.erase(iter);
+        } else {
+            --(*iter)->_rotation;
+            ++iter;
+        }
+    }
+    _impl->_cursor = (_impl->_cursor + 1u) % _impl->_size;
+}
+
+void TimeWheelRaw::Dump() const noexcept {
+    for (const auto &list : _impl->_slots) {
+        for (const auto &event : list) {
+            printf("[event: rotation %u]\t", event->_rotation);
+        }
+        printf("\n");
+    }
+}
+
+} // namespace scorpion
