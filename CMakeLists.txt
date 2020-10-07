@@ -30,6 +30,10 @@ add_executable(IPV4Filter
         src/IPV4Filter.cpp
         test/IPV4Filter.cpp)
 
+add_executable(LeakyBucket
+        src/LeakyBucket.h
+        test/LeakyBucket.cpp)
+
 add_executable(LockFreeQueue
         src/MPMCQueue.h
         src/MPSCQueue.h
@@ -48,3 +52,7 @@ add_executable(TimeWheel
         src/TimeWheel.h
         src/TimeWheel.cpp
         test/TimeWheel.cpp)
+
+add_executable(TokenBucket
+        src/TokenBucket.h
+        test/TokenBucket.cpp)
