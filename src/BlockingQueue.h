@@ -10,6 +10,8 @@
 #include <condition_variable>
 #include <mutex>
 
+namespace scorpion {
+
 template <typename T>
 class BlockingQueue {
 public:
@@ -20,7 +22,7 @@ public:
 
     ~BlockingQueue() {
         T value;
-        while (TryDequeue(value))
+        while (TryPop(value))
             ;
         delete head_;
     }
@@ -32,20 +34,20 @@ public:
     BlockingQueue &operator=(BlockingQueue &&other) = delete;
 
 public:
-    void Enqueue(const T &value) {
+    void Push(const T &value) {
         std::lock_guard<std::mutex> lk(tail_mutex_);
         tail_->value = value;
-        InternalEnqueue();
+        InternalPush();
     }
 
-    void Enqueue(T &&value) {
+    void Push(T &&value) {
         std::lock_guard<std::mutex> lk(tail_mutex_);
         tail_->value = std::move(value);
-        InternalEnqueue();
+        InternalPush();
         return tail_->value;
     }
 
-    bool TryDequeue(T &value) {
+    bool TryPop(T &value) {
         std::unique_lock<std::mutex> lk(head_mutex_);
         if (head_ == get_tail()) {
             return false;
@@ -61,7 +63,7 @@ public:
         return true;
     }
 
-    T Dequeue() {
+    T Pop() {
         std::unique_lock<std::mutex> lk(head_mutex_);
         cond_var_.wait(lk, [this] { return head_ != get_tail(); });
 
@@ -98,7 +100,7 @@ private:
             , next(nullptr) {}
     };
 
-    void InternalEnqueue() {
+    void InternalPush() {
         Node *new_tail = new Node;
         tail_->next = new_tail;
         tail_ = new_tail;
@@ -119,3 +121,5 @@ private:
     Node *tail_;
     std::atomic<size_t> size_;
 };
+
+} // namespace scorpion

@@ -1,4 +1,5 @@
 #include "BlockingQueue.h"
+
 #include <cassert>
 #include <chrono>
 #include <iostream>
@@ -6,127 +7,130 @@
 #include <unordered_map>
 #include <vector>
 
-const int kMaxThreads = 8;
+using namespace std;
+using namespace scorpion;
+
+const int kMaxThreads = 16;
 static_assert((kMaxThreads & (kMaxThreads - 1)) == 0, "Make sure kMaxThreads == 2^n");
 
 int maxElements;
 BlockingQueue<int> q;
-std::atomic<int> cnt(0);
-std::atomic<bool> start(false);
-std::unordered_map<int, int *> elements2timespan;
+atomic<int> cnt(0);
+atomic<bool> start(false);
+unordered_map<int, int *> elements2timespan;
 
-void onEnqueue(int divide) {
+void onPush(int divide) {
     while (!start) {
-        std::this_thread::yield();
+        this_thread::yield();
     }
     for (int i = 0; i < maxElements / divide; ++i) {
-        q.Enqueue(i);
+        q.Push(i);
     }
 }
 
-void onDequeue() {
+void onPop() {
     while (!start) {
-        std::this_thread::yield();
+        this_thread::yield();
     }
     int x;
-    for (; cnt.load(std::memory_order_relaxed) < maxElements;) {
-        if (q.TryDequeue(x)) {
-            cnt.fetch_add(1, std::memory_order_relaxed);
+    for (; cnt.load(memory_order_relaxed) < maxElements;) {
+        if (q.TryPop(x)) {
+            cnt.fetch_add(1, memory_order_relaxed);
         }
     }
 }
 
-void TestConcurrentEnqueue() {
-    std::vector<std::thread> threads;
+void TestConcurrentPush() {
+    vector<thread> threads;
     for (int i = 0; i < kMaxThreads; ++i) {
-        threads.emplace_back(onEnqueue, kMaxThreads);
+        threads.emplace_back(onPush, kMaxThreads);
     }
 
+    auto t1_ = chrono::steady_clock::now();
     start = true;
-    auto t1_ = std::chrono::steady_clock::now();
     for (size_t i = 0; i < kMaxThreads; ++i) {
         threads[i].join();
     }
-    auto t2_ = std::chrono::steady_clock::now();
+    auto t2_ = chrono::steady_clock::now();
 
     assert(static_cast<int>(q.Size()) == maxElements);
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2_ - t1_).count();
+    auto ms = chrono::duration_cast<chrono::milliseconds>(t2_ - t1_).count();
     elements2timespan[maxElements][0] += (int)ms;
-    std::cout << maxElements << " elements enqueue concurrently, timespan=" << ms << "ms"
-              << "\n";
+    cout << maxElements << " elements push, timespan=" << ms << "ms"
+         << "\n";
     start = false;
 }
 
-void TestConcurrentDequeue() {
-    std::vector<std::thread> threads;
+void TestConcurrentPop() {
+    vector<thread> threads;
     for (int i = 0; i < kMaxThreads; ++i) {
-        threads.emplace_back(onDequeue);
+        threads.emplace_back(onPop);
     }
 
     cnt = 0;
+    auto t1_ = chrono::steady_clock::now();
     start = true;
-    auto t1_ = std::chrono::steady_clock::now();
     for (size_t i = 0; i < kMaxThreads; ++i) {
         threads[i].join();
     }
-    auto t2_ = std::chrono::steady_clock::now();
+    auto t2_ = chrono::steady_clock::now();
 
     assert(static_cast<int>(q.Size()) == 0 && cnt == maxElements);
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2_ - t1_).count();
+    auto ms = chrono::duration_cast<chrono::milliseconds>(t2_ - t1_).count();
     elements2timespan[maxElements][1] += (int)ms;
-    std::cout << maxElements << " elements dequeue concurrently, timespan=" << ms << "ms"
-              << "\n";
+    cout << maxElements << " elements pop, timespan=" << ms << "ms"
+         << "\n";
 
     cnt = 0;
     start = false;
 }
 
-void TestConcurrentEnqueueAndDequeue() {
-    std::vector<std::thread> enqueue_threads;
+void TestConcurrentPushAndPop() {
+    vector<thread> push_threads;
     for (int i = 0; i < kMaxThreads / 2; ++i) {
-        enqueue_threads.emplace_back(onEnqueue, kMaxThreads / 2);
+        push_threads.emplace_back(onPush, kMaxThreads / 2);
     }
 
-    std::vector<std::thread> dequeue_threads;
+    vector<thread> pop_threads;
     for (int i = 0; i < kMaxThreads / 2; ++i) {
-        dequeue_threads.emplace_back(onDequeue);
+        pop_threads.emplace_back(onPop);
     }
 
     cnt = 0;
+    auto t1_ = chrono::steady_clock::now();
     start = true;
-    auto t1_ = std::chrono::steady_clock::now();
     for (size_t i = 0; i < kMaxThreads / 2; ++i) {
-        enqueue_threads[i].join();
+        push_threads[i].join();
     }
     for (size_t i = 0; i < kMaxThreads / 2; ++i) {
-        dequeue_threads[i].join();
+        pop_threads[i].join();
     }
-    auto t2_ = std::chrono::steady_clock::now();
+    auto t2_ = chrono::steady_clock::now();
 
     assert(static_cast<int>(q.Size()) == 0 && cnt == maxElements);
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2_ - t1_).count();
+    auto ms = chrono::duration_cast<chrono::milliseconds>(t2_ - t1_).count();
     elements2timespan[maxElements][2] += (int)ms;
-    std::cout << maxElements << " elements enqueue and dequeue concurrently, timespan=" << ms << "ms"
-              << "\n";
+    cout << maxElements << " elements push and pop, timespan=" << ms << "ms"
+         << "\n";
 
     cnt = 0;
     start = false;
 }
 
-auto onDequeue_with_count = [](std::unordered_map<int, int> &element2count) {
+auto onPop_with_count = [](unordered_map<int, int> &element2count) {
     while (!start) {
-        std::this_thread::yield();
+        this_thread::yield();
     }
     int x;
-    for (; cnt.load(std::memory_order_relaxed) < maxElements;) {
-        if (q.TryDequeue(x)) {
-            cnt.fetch_add(1, std::memory_order_relaxed);
+    for (; cnt.load(memory_order_relaxed) < maxElements;) {
+        if (q.TryPop(x)) {
+            cnt.fetch_add(1, memory_order_relaxed);
             ++element2count[x];
         }
     }
 };
 
-std::unordered_map<int, int> element2count[kMaxThreads / 2];
+unordered_map<int, int> element2count[kMaxThreads / 2];
 
 void TestCorrectness() {
     maxElements = 1000000;
@@ -138,23 +142,23 @@ void TestCorrectness() {
         }
     }
 
-    std::vector<std::thread> enqueue_threads;
+    vector<thread> push_threads;
     for (int i = 0; i < kMaxThreads / 2; ++i) {
-        enqueue_threads.emplace_back(onEnqueue, kMaxThreads / 2);
+        push_threads.emplace_back(onPush, kMaxThreads / 2);
     }
 
-    std::vector<std::thread> dequeue_threads;
+    vector<thread> pop_threads;
     for (auto &i : element2count) {
-        dequeue_threads.emplace_back(onDequeue_with_count, std::ref(i));
+        pop_threads.emplace_back(onPop_with_count, ref(i));
     }
 
     cnt = 0;
     start = true;
     for (size_t i = 0; i < kMaxThreads / 2; ++i) {
-        enqueue_threads[i].join();
+        push_threads[i].join();
     }
     for (size_t i = 0; i < kMaxThreads / 2; ++i) {
-        dequeue_threads[i].join();
+        pop_threads[i].join();
     }
 
     assert(static_cast<int>(q.Size()) == 0 && cnt == maxElements);
@@ -167,13 +171,7 @@ void TestCorrectness() {
     }
 }
 
-int main(int argc, char const *argv[]) {
-    (void)argc;
-    (void)argv;
-
-    std::cout << "Benchmark with 4 threads:"
-              << "\n";
-
+int main() {
     int elements[] = {10000, 100000, 1000000};
     int timespan1[] = {0, 0, 0};
     int timespan2[] = {0, 0, 0};
@@ -186,25 +184,25 @@ int main(int argc, char const *argv[]) {
     for (int i = 0; i < 10; ++i) {
         for (int element : elements) {
             maxElements = element;
-            TestConcurrentEnqueue();
-            TestConcurrentDequeue();
-            TestConcurrentEnqueueAndDequeue();
-            std::cout << "\n";
+            TestConcurrentPush();
+            TestConcurrentPop();
+            TestConcurrentPushAndPop();
+            cout << "\n";
         }
     }
 
     for (int element : elements) {
         maxElements = element;
         float avg = static_cast<float>(elements2timespan[maxElements][0]) / 10.0f;
-        std::cout << maxElements << " elements enqueue concurrently, average timespan=" << avg << "ms"
-                  << "\n";
+        cout << maxElements << " elements push, average timespan=" << avg << "ms"
+             << "\n";
         avg = static_cast<float>(elements2timespan[maxElements][1]) / 10.0f;
-        std::cout << maxElements << " elements dequeue concurrently, average timespan=" << avg << "ms"
-                  << "\n";
+        cout << maxElements << " elements pop, average timespan=" << avg << "ms"
+             << "\n";
         avg = static_cast<float>(elements2timespan[maxElements][2]) / 10.0f;
-        std::cout << maxElements << " elements enqueue and dequeue concurrently, average timespan=" << avg << "ms"
-                  << "\n";
-        std::cout << "\n";
+        cout << maxElements << " elements push and pop, average timespan=" << avg << "ms"
+             << "\n";
+        cout << "\n";
     }
 
     TestCorrectness();
