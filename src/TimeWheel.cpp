@@ -3,6 +3,7 @@
 #include <chrono>
 #include <list>
 #include <vector>
+#include <future>
 
 namespace scorpion {
 
@@ -29,13 +30,15 @@ struct CEvent {
 };
 
 struct TimeWheelRaw::Impl {
+    const bool _async;
     const unsigned _span;
     const unsigned _size;
     unsigned _cursor;
     vector<list<unique_ptr<CEvent>>> _slots;
 
-    explicit Impl(unsigned span, unsigned size)
-        : _span(span)
+    explicit Impl(bool async, unsigned span, unsigned size)
+        : _async(async)
+        , _span(span)
         , _size(size)
         , _cursor(0) {
         _slots.resize(size);
@@ -45,8 +48,8 @@ struct TimeWheelRaw::Impl {
 
 namespace scorpion {
 
-TimeWheelRaw::TimeWheelRaw()
-    : _impl(new Impl(kTimeWheelSpan, kTimeWheelSize)) {}
+TimeWheelRaw::TimeWheelRaw(bool async)
+    : _impl(new Impl(async, kTimeWheelSpan, kTimeWheelSize)) {}
 
 TimeWheelRaw::~TimeWheelRaw() = default;
 
@@ -62,7 +65,16 @@ void TimeWheelRaw::Tick() noexcept {
     auto &list = _impl->_slots[_impl->_cursor];
     for (auto iter = list.begin(); iter != list.end(); /*nothing*/) {
         if ((*iter)->_rotation == 0) {
-            (*iter)->_callback();
+            if (_impl->_async) {
+                // bug with async(): temporary's dtor waits for (*iter)->_callback()
+                // async(launch::async, (*iter)->_callback);
+                
+                // Note: start new thread is a bad idea, thread pool may be a good solution.
+                thread t((*iter)->_callback);
+                t.detach();
+            } else {
+                (*iter)->_callback();
+            }
             if ((*iter)->_loop < 0) {
                 auto interval = (*iter)->_interval;
                 this->Add(move((*iter)->_callback), interval, -1);

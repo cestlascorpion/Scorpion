@@ -8,48 +8,68 @@ using namespace std;
 using namespace chrono;
 using namespace scorpion;
 
-void test() {
+void testRaw() {
     TimeWheelRaw twr;
 
     for (auto i = 1u; i <= 15; ++i) {
-        twr.Add([=]() { printf("once id %u\n", i); }, i, 1);
+        twr.Add([=]() { printf("[%ld] once id %u\n", time(nullptr), i); }, i, 1);
     }
 
-    twr.Add([]() { printf("loop inter 3\n"); }, 3, -1);
-    twr.Add([]() { printf("loop inter 5\n"); }, 5, 2);
+    twr.Add([]() { printf("[%ld] loop inter 3\n", time(nullptr)); }, 3, -1);
+    twr.Add([]() { printf("[%ld] loop inter 5\n", time(nullptr)); }, 5, 2);
     twr.Dump();
 
-    for (int i = 0; i < 30; ++i) {
+    for (int i = 0; i < 20; ++i) {
         twr.Tick();
         this_thread::sleep_for(seconds(1));
         printf("-------------------\n");
     }
 }
 
-template <typename Resolution>
+template <typename Resolution, bool Async>
 void test() {
-    TimeWheel<Resolution> tw;
+    TimeWheel<Resolution> tw(Async);
     thread t1([&]() {
         for (auto i = 1u; i <= 15; ++i) {
-            tw.Add([=]() { printf("once id %u\n", i); }, i, 1);
+            tw.Add([=]() { printf("[%ld] once id %u\n", time(nullptr), i); }, i, 1);
         }
     });
-    thread t2([&]() { tw.Add([]() { printf("loop inter 3\n"); }, 3, -1); });
-    thread t3([&]() { tw.Add([]() { printf("loop inter 5\n"); }, 5, 2); });
+    thread t2([&]() {
+        tw.Add(
+            []() {
+                printf("[%ld] loop inter 3 begin\n", time(nullptr));
+                if (Async) {
+                    this_thread::sleep_for(seconds(3));
+                }
+                printf("[%ld] loop inter 3 end\n", time(nullptr));
+            },
+            3, -1);
+    });
+    thread t3([&]() {
+        tw.Add(
+            []() {
+                printf("[%ld] loop inter 5 begin\n", time(nullptr));
+                if (Async) {
+                    this_thread::sleep_for(seconds(5));
+                }
+                printf("[%ld] loop inter 5 end\n", time(nullptr));
+            },
+            5, 2);
+    });
     t1.join();
     t2.join();
     t3.join();
 
-    this_thread::sleep_for(Resolution(20));
+    this_thread::sleep_for(Resolution(30));
 }
 
 int main() {
     printf("===================\n");
-    test();
+    testRaw();
     printf("===================\n");
-    test<seconds>();
+    test<seconds, false>();
     printf("===================\n");
-    test<milliseconds>();
+    test<seconds, true>();
     printf("===================\n");
     return 0;
 }

@@ -1,5 +1,6 @@
 /**
- * A raw implementation of timewheel and its wrapper. 
+ * A raw implementation of timewheel and its wrapper.
+ * Note that: better not use it when it comes to dealing with lots os task
  *
  */
 
@@ -16,7 +17,7 @@ namespace scorpion {
 
 class TimeWheelRaw {
 public:
-    TimeWheelRaw();
+    explicit TimeWheelRaw(bool async = false);
     ~TimeWheelRaw();
 
     TimeWheelRaw(const TimeWheelRaw &) = delete;
@@ -35,9 +36,9 @@ private:
 template <typename Resolution = std::chrono::seconds>
 class TimeWheel {
 public:
-    TimeWheel()
-        : _running(true)
-        , _twr(new TimeWheelRaw())
+    explicit TimeWheel(bool async = false)
+        : _twr(new TimeWheelRaw(async))
+        , _running(true)
         , _thread([this]() {
             while (_running.load(std::memory_order_acquire)) {
                 std::this_thread::sleep_for(Resolution(1));
@@ -62,9 +63,8 @@ public:
     }
 
 private:
-    std::atomic<bool> _running;
     std::unique_ptr<TimeWheelRaw> _twr;
-
+    std::atomic<bool> _running;
     std::mutex _mutex;
     std::thread _thread;
 };
