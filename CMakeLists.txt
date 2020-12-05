@@ -56,3 +56,8 @@ add_executable(TimeWheel
 add_executable(TokenBucket
         src/TokenBucket.h
         test/TokenBucket.cpp)
+
+add_executable(CMDStats
+        src/CMDStats.h
+        src/CMDStats.cpp
+        test/CMDStats.cpp)
