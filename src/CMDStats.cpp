@@ -52,7 +52,7 @@ struct CMDValue {
 };
 
 struct CMDKeyHash {
-    size_t operator()(const array<uint32_t, 3u> &k) const noexcept {
+    size_t operator()(const array<uint32_t, 3u> &k) const {
         return hash<uint32_t>()(get<0u>(k)) ^ hash<uint32_t>()(get<1u>(k)) ^ hash<uint32_t>()(get<2u>(k));
     }
 };

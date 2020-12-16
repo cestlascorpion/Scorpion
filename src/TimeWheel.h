@@ -24,9 +24,9 @@ public:
     TimeWheelRaw &operator=(const TimeWheelRaw &) = delete;
 
 public:
-    void Add(std::function<void() noexcept> &&cb, unsigned int interval, int loop) noexcept;
-    void Tick() noexcept;
-    void Dump() const noexcept;
+    void Add(std::function<void()> &&cb, unsigned int interval, int loop);
+    void Tick();
+    void Dump() const;
 
 private:
     struct Impl;
@@ -57,9 +57,9 @@ public:
     TimeWheel &operator=(const TimeWheel &) = delete;
 
 public:
-    void Add(std::function<void() noexcept> &&cb, unsigned int interval, int loop) noexcept {
+    void Add(std::function<void()> &&cb, unsigned int interval, int loop) {
         std::lock_guard<std::mutex> lock(_mutex);
-        _twr->Add(std::forward<std::function<void() noexcept>>(cb), interval, loop);
+        _twr->Add(std::forward<std::function<void()>>(cb), interval, loop);
     }
 
 private:

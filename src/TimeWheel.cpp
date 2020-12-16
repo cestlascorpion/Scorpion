@@ -1,14 +1,14 @@
 #include "TimeWheel.h"
 
 #include <chrono>
+#include <future>
 #include <list>
 #include <vector>
-#include <future>
 
 namespace scorpion {
 
 using namespace std;
-using cbType = function<void() noexcept>;
+using cbType = function<void()>;
 
 constexpr unsigned kTimeWheelSpan = 1;
 constexpr unsigned kTimeWheelSize = 10;
@@ -53,7 +53,7 @@ TimeWheelRaw::TimeWheelRaw(bool async)
 
 TimeWheelRaw::~TimeWheelRaw() = default;
 
-void TimeWheelRaw::Add(cbType &&cb, unsigned interval, int loop) noexcept {
+void TimeWheelRaw::Add(cbType &&cb, unsigned interval, int loop) {
     auto ticks = interval < _impl->_span ? 1u : interval / _impl->_span;
     auto rotation = ticks / _impl->_size;
     auto index = (_impl->_cursor + ticks % _impl->_size) % _impl->_size;
@@ -61,14 +61,14 @@ void TimeWheelRaw::Add(cbType &&cb, unsigned interval, int loop) noexcept {
     _impl->_slots[index].push_back(move(event));
 }
 
-void TimeWheelRaw::Tick() noexcept {
+void TimeWheelRaw::Tick() {
     auto &list = _impl->_slots[_impl->_cursor];
     for (auto iter = list.begin(); iter != list.end(); /*nothing*/) {
         if ((*iter)->_rotation == 0) {
             if (_impl->_async) {
                 // bug with async(): temporary's dtor waits for (*iter)->_callback()
                 // async(launch::async, (*iter)->_callback);
-                
+
                 // Note: start new thread is a bad idea, thread pool may be a good solution.
                 thread t((*iter)->_callback);
                 t.detach();
@@ -94,7 +94,7 @@ void TimeWheelRaw::Tick() noexcept {
     _impl->_cursor = (_impl->_cursor + 1u) % _impl->_size;
 }
 
-void TimeWheelRaw::Dump() const noexcept {
+void TimeWheelRaw::Dump() const {
     for (const auto &list : _impl->_slots) {
         for (const auto &event : list) {
             printf("[event: rotation %u]\t", event->_rotation);
