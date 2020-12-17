@@ -48,6 +48,10 @@ add_executable(NRWLock
         src/NRWLock.cpp
         test/NRWLock.cpp)
 
+add_executable(SpinLockMutex
+        src/SpinLockMutex.h
+        test/SpinLockMutex.cpp)
+
 add_executable(TimeWheel
         src/TimeWheel.h
         src/TimeWheel.cpp
