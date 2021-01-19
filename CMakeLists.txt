@@ -8,60 +8,60 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wconversion -Wsizeof-pointer-memaccess \
                      -Wfloat-equal -Wconversion-null -Woverflow -Wshadow -faligned-new \
                      -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -pthread -g -O3")
 
-include_directories(src test)
+include_directories(src/algorithm src/base src/concurrent src/experiment src/network src/utilities test)
 
 add_executable(AsyncTaskPool
-        src/MPMCQueue.h
-        src/MPSCQueue.h
-        src/AsyncTaskPool.h
-        src/AsyncTaskPoolTemplate.h
+        src/concurrent/MPMCQueue.h
+        src/concurrent/MPSCQueue.h
+        src/utilities/AsyncTaskPool.h
+        src/utilities/AsyncTaskPoolTemplate.h
         test/AsyncTaskPool.cpp)
 
 add_executable(BlockingQueue
-        src/BlockingQueue.h
+        src/concurrent/BlockingQueue.h
         test/BlockingQueue.cpp)
 
 add_executable(ConsistentHash
-        src/ConsistentHash.h
+        src/algorithm/ConsistentHash.h
         test/ConsistentHash.cpp)
 
 add_executable(IPV4Filter
-        src/IPV4Filter.h
-        src/IPV4Filter.cpp
+        src/utilities/IPV4Filter.h
+        src/utilities/IPV4Filter.cpp
         test/IPV4Filter.cpp)
 
 add_executable(LeakyBucket
-        src/LeakyBucket.h
+        src/algorithm/LeakyBucket.h
         test/LeakyBucket.cpp)
 
 add_executable(LockFreeQueue
-        src/MPMCQueue.h
-        src/MPSCQueue.h
-        src/SPSCQueue.h
+        src/concurrent/MPMCQueue.h
+        src/concurrent/MPSCQueue.h
+        src/concurrent/SPSCQueue.h
         test/LockFreeQueue.cpp)
 
 add_executable(NRWLock
-        src/SingletonTemplate.h
-        src/FLock.h
-        src/FLock.cpp
-        src/NRWLock.h
-        src/NRWLock.cpp
+        src/base/SingletonTemplate.h
+        src/utilities/FLock.h
+        src/utilities/FLock.cpp
+        src/experiment/NRWLock.h
+        src/experiment/NRWLock.cpp
         test/NRWLock.cpp)
 
 add_executable(SpinLockMutex
-        src/SpinLockMutex.h
+        src/concurrent/SpinLockMutex.h
         test/SpinLockMutex.cpp)
 
 add_executable(TimeWheel
-        src/TimeWheel.h
-        src/TimeWheel.cpp
+        src/algorithm/TimeWheel.h
+        src/algorithm/TimeWheel.cpp
         test/TimeWheel.cpp)
 
 add_executable(TokenBucket
-        src/TokenBucket.h
+        src/algorithm/TokenBucket.h
         test/TokenBucket.cpp)
 
 add_executable(CMDStats
-        src/CMDStats.h
-        src/CMDStats.cpp
+        src/utilities/CMDStats.h
+        src/utilities/CMDStats.cpp
         test/CMDStats.cpp)
