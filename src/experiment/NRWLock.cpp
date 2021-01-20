@@ -1,6 +1,5 @@
 #include "NRWLock.h"
 
-#include <cstdio>
 #include <unistd.h>
 
 namespace scorpion {

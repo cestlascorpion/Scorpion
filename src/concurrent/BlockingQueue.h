@@ -1,4 +1,3 @@
-
 /**
  * A simple BlockingQueue implemented in c++17 by bhhbazinga(https://github.com/bhhbazinga).
  *
