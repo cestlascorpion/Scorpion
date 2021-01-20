@@ -3,11 +3,28 @@
 #include <cerrno>
 #include <cstdio>
 #include <fcntl.h>
+#include <poll.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
 
 namespace Scorpion {
+
+static int Poll(int soxFd, short expect, short *result, int timeout) {
+    pollfd poller{};
+    memset(&poller, 0, sizeof(poller));
+    poller.fd = soxFd;
+    poller.events = expect;
+
+    int ret = poll(&poller, 1, timeout);
+    if (ret == 0) {
+        errno = ETIMEDOUT;
+    }
+    if (ret != 0) {
+        *result = poller.revents;
+    }
+    return ret;
+}
 
 UnixSocket::UnixSocket(const char *path, UNIX_TYPE type)
     : _soxFd(-1)
@@ -98,8 +115,43 @@ int UnixSocket::SetTimeout(const timeval &tv) {
 }
 
 int UnixSocket::CheckConnection() {
-    // todo
-    return 0;
+    auto timeout = CONNECT_TIMEOUT * 1000;
+    for (int retry = 0; retry < timeout / 1000; ++retry) {
+        short expect = POLLOUT;
+        short result = 0;
+        int ret = Poll(_soxFd, expect, &result, timeout);
+        if (ret <= 0) {
+            if (errno == EINTR) {
+                continue;
+            } else {
+                printf("connect err %d %s\n", errno, strerror(errno));
+                return -1;
+            }
+        }
+        if ((result & expect) == 0) {
+            printf("unexpect event %d expect %d\n", result, expect);
+            return -1;
+        }
+        while (true) {
+            int opt = 0;
+            socklen_t len = sizeof(opt);
+            if (getsockopt(_soxFd, SOL_SOCKET, SO_ERROR, (void *)&opt, &len) == -1) {
+                if (errno == EINTR) {
+                    continue;
+                } else {
+                    printf("get socket opt err %d %s\n", errno, strerror(errno));
+                    return -1;
+                }
+            }
+            if (opt != 0) {
+                printf("get socket opt err %d %s\n", errno, strerror(errno));
+                return -1;
+            } else {
+                return 0;
+            }
+        }
+    }
+    return -1;
 }
 
 UnixSoxClient::UnixSoxClient(const char *path, UNIX_TYPE type)

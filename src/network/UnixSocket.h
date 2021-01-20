@@ -27,7 +27,7 @@ public:
     int CheckConnection();
 
 private:
-    enum { UNIX_PATH_LIMIT = 107 };
+    enum { UNIX_PATH_LIMIT = 107, CONNECT_TIMEOUT = 5 };
     int _soxFd;
     bool _block;
     UNIX_TYPE _type;
