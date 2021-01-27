@@ -3,7 +3,7 @@ project(Scorpion)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wconversion -Wsizeof-pointer-memaccess \
-                     -Wfloat-equal -Wconversion-null -Woverflow -Wshadow -faligned-new \
+                     -Wfloat-equal -Wconversion-null -Woverflow -Wshadow \
                      -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -pthread -g -O3")
 
 include_directories(
@@ -33,7 +33,8 @@ foreach (_target
         TimeWheel
         TokenBucket
         UnixDGRAM
-        UnixSTREAM)
+        UnixSTREAM
+        DigraphDot)
     add_executable(${_target} "test/${_target}.cpp")
     target_link_libraries(${_target} ${PROJECT_BINARY_DIR}/libScorpion.a)
 endforeach ()
