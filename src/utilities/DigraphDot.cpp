@@ -1,4 +1,5 @@
 #include "DigraphDot.h"
+
 #include <regex>
 #include <unistd.h>
 #include <vector>
@@ -115,7 +116,7 @@ void DigraphDot::doWriteLine(const string &svc, set<string> &visited, ofstream &
     }
 }
 
-void DigraphDot::doWriteNode(const set<std::string> &visited, ofstream &io) {
+void DigraphDot::doWriteNode(const set<string> &visited, ofstream &io) {
     for (const auto &node : visited) {
         auto iter = _nodes.find(node);
         if (iter == _nodes.end()) {
@@ -125,6 +126,7 @@ void DigraphDot::doWriteNode(const set<std::string> &visited, ofstream &io) {
         io << "\t" << iter->second->_name << "[" << Attribute(iter->second) << "];" << endl;
     }
 }
+
 int DigraphDot::WriteALL() {
     for (const auto &item : _relation) {
         if (WriteSVC(item.first) != 0) {

@@ -17,7 +17,6 @@ struct DotNode {
         : _name(std::move(name)) {
         _attr["style"] = "filled";
         _attr["shape"] = "box";
-        _attr["mode"] = "circuit";
     }
 };
 
@@ -38,6 +37,7 @@ private:
 private:
     std::map<std::string, std::unique_ptr<DotNode>> _nodes;
     std::map<std::string, std::set<std::string>> _relation;
+    std::map<std::string, std::map<std::string, std::set<std::string>>> _extra;
 };
 
 } // namespace Scorpion

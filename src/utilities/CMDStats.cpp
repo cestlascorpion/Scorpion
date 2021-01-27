@@ -1,11 +1,9 @@
 #include "CMDStats.h"
 
-#include <algorithm>
 #include <arpa/inet.h>
 #include <atomic>
 #include <memory>
 #include <mutex>
-#include <netinet/in.h>
 #include <unordered_map>
 
 using namespace std;
