@@ -1,3 +1,8 @@
+/**
+ * A simple implementation of spinlock with atomic flag.
+ * 
+ */
+
 #pragma once
 
 #include <atomic>

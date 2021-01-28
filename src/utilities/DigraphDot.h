@@ -1,3 +1,18 @@
+/**
+ * Resolving the calling relationship between services.
+ * file example:
+ *     |---------|
+ *     |A B C    | -> means svc.A call svc.B svc.C
+ *     |B D      |    use " " to separate services, the first one is the Caller, others are callees 
+ *     |D E      |
+ *     |---------|
+ * which means the service invocation relationship is as follows:
+ *     A --> B --> D --> E
+ *     |
+ *     \ (arrow here!)
+ *      C
+ */
+
 #pragma once
 
 #include <fstream>
@@ -25,6 +40,9 @@ struct DotNode {
     explicit DotNode(const std::string &name);
 };
 
+// Caller Node will be handled by DefaultNode()
+// Callee Node will be handled by @handleNode, the parameter
+// Note: _label must be unique!
 struct DefaultNode {
     void operator()(DotNode *node) {
         node->_label = node->_name;
@@ -34,6 +52,7 @@ struct DefaultNode {
     }
 };
 
+// Set Line's Attribute, here is an example
 struct DefaultLine {
     std::string operator()(DotNode *, DotNode *) {
         return R"(["style"="bold","len"="3"])";
@@ -56,7 +75,9 @@ private:
     void doWriteNode(const std::set<std::string> &visited, std::ofstream &io);
 
 private:
+    // eg: dot neato twopi circo osage fdp sfdp
     const std::vector<std::string> _layouts;
+    // eg: svg png jpg 
     const std::string _format;
     // key: node->_label value: node_ptr
     std::map<std::string, std::unique_ptr<DotNode>> _nodes;

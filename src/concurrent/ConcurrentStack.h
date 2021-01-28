@@ -1,3 +1,8 @@
+/**
+ * A implementation of concurrent stack.
+ * 
+ */
+
 #pragma once
 
 #include <memory>

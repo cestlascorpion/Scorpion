@@ -1,3 +1,8 @@
+/**
+ * A implementation of concurrent queue.
+ * 
+ */
+
 #pragma once
 
 #include <condition_variable>

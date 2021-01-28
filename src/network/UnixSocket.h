@@ -1,3 +1,8 @@
+/**
+ * A implementation of Unix Domain Socket Client/Server.
+ * 
+ */
+
 #pragma once
 
 #include <ctime>

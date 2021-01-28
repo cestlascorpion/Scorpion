@@ -1,3 +1,8 @@
+/**
+ * Use CMDStatReport() to report the RPC result and use CollectCMDStats() to collet them.
+ * All the functions are thread safe.
+ */
+
 #pragma once
 
 #include <array>
