@@ -26,27 +26,33 @@ static int Poll(int soxFd, short expect, short *result, int timeout) {
     return ret;
 }
 
-UnixSocket::UnixSocket(const char *path, UNIX_TYPE type)
-    : _soxFd(-1)
-    , _block(true)
+UnixSocket::UnixSocket(const char *path, int type)
+    : _sox(-1)
     , _type(type)
     , _path() {
     strncpy(_path, path, sizeof(_path));
 }
 
+UnixSocket::UnixSocket(int fd, int type)
+    : _sox(fd)
+    , _type(type)
+    , _path() {}
+
 UnixSocket::~UnixSocket() {
-    if (_soxFd != -1) {
-        close(_soxFd);
+    if (_sox != -1) {
+        close(_sox);
     }
-    unlink(_path);
+    if (_path[0] != 0) {
+        unlink(_path);
+    }
 }
 
 int UnixSocket::Create() {
-    if (_soxFd != -1) {
+    if (_sox != -1) {
         return -1;
     }
-    _soxFd = socket(AF_UNIX, _type, 0);
-    if (_soxFd == -1) {
+    _sox = socket(AF_UNIX, _type, 0);
+    if (_sox == -1) {
         printf("socket err %d %s\n", errno, strerror(errno));
         return -1;
     }
@@ -57,34 +63,35 @@ int UnixSocket::Create() {
     strncpy(addr.sun_path, _path, sizeof(addr.sun_path) - 1);
     unlink(addr.sun_path);
 
-    if (bind(_soxFd, (sockaddr *)&addr, (socklen_t)sizeof(addr)) == -1) {
+    if (bind(_sox, (sockaddr *)&addr, (socklen_t)sizeof(addr)) == -1) {
         printf("bind error %d %s\n", errno, strerror(errno));
         return -1;
     }
-
     return 0;
 }
 
 int UnixSocket::Destroy() {
-    if (_soxFd != -1) {
-        close(_soxFd);
-        _soxFd = -1;
+    if (_sox != -1) {
+        close(_sox);
+        _sox = -1;
     }
-    unlink(_path);
+    if (_path[0] != 0) {
+        unlink(_path);
+    }
     memset(_path, 0, sizeof(_path));
     return 0;
 }
 
-int UnixSocket::GetSox() const {
-    return _soxFd;
+int UnixSocket::getSox() const {
+    return _sox;
 }
 
-bool UnixSocket::IsBlock() const {
-    return _block;
+int UnixSocket::getType() const {
+    return _type;
 }
 
-int UnixSocket::SetBlock(bool block) {
-    int flag = fcntl(_soxFd, F_GETFL);
+int UnixSocket::setBlock(int sox, bool block) {
+    int flag = fcntl(sox, F_GETFL);
     if (flag < 0) {
         printf("fcntl F_GETFL err %d %s\n", errno, strerror(errno));
         return -1;
@@ -94,32 +101,31 @@ int UnixSocket::SetBlock(bool block) {
     } else {
         flag |= O_NONBLOCK;
     }
-    if (fcntl(_soxFd, F_SETFL, flag) != 0) {
+    if (fcntl(sox, F_SETFL, flag) != 0) {
         printf("fcntl F_SETFL err %d %s\n", errno, strerror(errno));
         return -1;
     }
-    _block = block;
     return 0;
 }
 
-int UnixSocket::SetTimeout(const timeval &tv) {
-    if (setsockopt(_soxFd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) == -1) {
+int UnixSocket::setTimeout(int sox, const timeval &tv) {
+    if (setsockopt(sox, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) == -1) {
         printf("set socket recv timeout err %d %s\n", errno, strerror(errno));
         return -1;
     }
-    if (setsockopt(_soxFd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv)) == -1) {
+    if (setsockopt(sox, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv)) == -1) {
         printf("set socket send timeout err %d %s\n", errno, strerror(errno));
         return -1;
     }
     return 0;
 }
 
-int UnixSocket::CheckConnection() {
-    auto timeout = CONNECT_TIMEOUT * 1000;
+int UnixSocket::checkConnection(int sox) {
+    auto timeout = SOCKET_TIMEOUT * 1000;
     for (int retry = 0; retry < timeout / 1000; ++retry) {
         short expect = POLLOUT;
         short result = 0;
-        int ret = Poll(_soxFd, expect, &result, timeout);
+        int ret = Poll(sox, expect, &result, timeout);
         if (ret <= 0) {
             if (errno == EINTR) {
                 continue;
@@ -135,7 +141,7 @@ int UnixSocket::CheckConnection() {
         while (true) {
             int opt = 0;
             socklen_t len = sizeof(opt);
-            if (getsockopt(_soxFd, SOL_SOCKET, SO_ERROR, (void *)&opt, &len) == -1) {
+            if (getsockopt(sox, SOL_SOCKET, SO_ERROR, (void *)&opt, &len) == -1) {
                 if (errno == EINTR) {
                     continue;
                 } else {
@@ -154,15 +160,65 @@ int UnixSocket::CheckConnection() {
     return -1;
 }
 
-UnixSoxClient::UnixSoxClient(const char *path, UNIX_TYPE type)
-    : _sox(path, type) {}
-
-UnixSoxClient::~UnixSoxClient() {
-    _sox.Destroy();
+ssize_t UnixSocket::Send(int sox, const void *buffer, size_t length) {
+    const char *cursor = (const char *)buffer;
+    auto left = (ssize_t)length;
+    while (left > 0) {
+        auto byte = send(sox, cursor, (size_t)left, 0);
+        if (byte > 0) {
+            left -= byte;
+            cursor += byte;
+            continue;
+        }
+        if (errno == EINTR) {
+            continue;
+        } else {
+            printf("write err %d %s\n", errno, strerror(errno));
+            return -1;
+        }
+    }
+    return (ssize_t)length - left;
 }
+
+ssize_t UnixSocket::Recv(int sox, void *buffer, size_t length, bool wait) {
+    // todo MSG_TRUNC
+    char *cursor = (char *)buffer;
+    auto left = (ssize_t)length;
+    while (left > 0) {
+        auto byte = recv(sox, cursor, (size_t)left, 0);
+        if (byte > 0) {
+            left -= byte;
+            cursor += byte;
+            continue;
+        }
+        if (byte == 0) {
+            printf("closed by peer\n");
+            return -1;
+        }
+        if (errno == EINTR) {
+            continue;
+        } else {
+            printf("read err %d %s\n", errno, strerror(errno));
+            return -1;
+        }
+    }
+    return (ssize_t)length - left;
+}
+
+UnixSoxClient::UnixSoxClient(const char *path, int type)
+    : UnixSocket(path, type) {}
+
+UnixSoxClient::UnixSoxClient(int fd, int type)
+    : UnixSocket(fd, type) {}
+
+UnixSoxClient::~UnixSoxClient() = default;
 
 int UnixSoxClient::Connect(const char *server) {
     if (server == nullptr) {
+        return -1;
+    }
+    if (getSox() == -1) {
+        printf("create a socket first\n");
         return -1;
     }
 
@@ -171,19 +227,18 @@ int UnixSoxClient::Connect(const char *server) {
     addr.sun_family = AF_UNIX;
     strncpy(addr.sun_path, server, sizeof(addr.sun_path) - 1);
 
-    bool block = _sox.IsBlock();
-    if (block && _sox.SetBlock(false)) {
+    if (setBlock(getSox(), false)) {
         printf("set nonblocking fail\n");
         return -1;
     }
 
     while (true) {
-        if (connect(_sox.GetSox(), (sockaddr *)&addr, sizeof(addr)) == -1) {
+        if (connect(getSox(), (sockaddr *)&addr, sizeof(addr)) == -1) {
             if (errno == EINTR) {
                 continue;
             }
             if (errno == EINPROGRESS) {
-                if (_sox.CheckConnection() == 0) {
+                if (checkConnection(getSox()) == 0) {
                     break;
                 } else {
                     printf("connect fail\n");
@@ -198,22 +253,81 @@ int UnixSoxClient::Connect(const char *server) {
         }
     }
 
-    if (block && _sox.SetBlock(true)) {
+    if (setTimeout(getSox(), timeval{SOCKET_TIMEOUT, 0}) != 0) {
+        printf("set time out fail\n");
+        return -1;
+    }
+
+    if (setBlock(getSox(), true)) {
         printf("set blocking fail\n");
         return -1;
     }
     return 0;
 }
 
-UnixSoxServer::UnixSoxServer(const char *path, UNIX_TYPE type)
-    : _sox(path, type) {}
+UnixSoxServer::UnixSoxServer(const char *path, int type)
+    : UnixSocket(path, type) {}
 
-UnixSoxServer::~UnixSoxServer() {
-    _sox.Destroy();
-}
+UnixSoxServer::~UnixSoxServer() = default;
 
 int UnixSoxServer::Listen() {
-    // todo
+    if (getType() == SOCK_DGRAM) {
+        printf("no need to call Listen() for datagram type\n");
+        return -1;
+    }
+    if (getSox() == -1) {
+        printf("create a socket first\n");
+        return -1;
+    }
+    if (listen(getSox(), LISTEN_BLOCK_LIST) == -1) {
+        printf("listen err %d %s\n", errno, strerror(errno));
+        return -1;
+    }
     return 0;
 }
+
+std::unique_ptr<UnixSoxClient> UnixSoxServer::Accept() {
+    if (getType() == SOCK_DGRAM) {
+        printf("no need to call Accept() for datagram type\n");
+        return nullptr;
+    }
+    if (getSox() == -1) {
+        printf("create a socket first\n");
+        return nullptr;
+    }
+    while (true) {
+        sockaddr_un client{};
+        socklen_t socklen = sizeof(client);
+        memset(&client, 0, sizeof(client));
+        client.sun_family = AF_UNIX;
+
+        int ret = accept(getSox(), (sockaddr *)&client, &socklen);
+        if (ret == -1) {
+            if (errno == EINTR) {
+                continue;
+            } else {
+                printf("accept err %d %s\n", errno, strerror(errno));
+                break;
+            }
+        } else {
+            return std::make_unique<UnixSoxClient>(ret, _type);
+        }
+    }
+    return nullptr;
+}
+
+SocketBuffer::SocketBuffer(size_t size)
+    : _size(size)
+    , _buffer(new char[size]) {}
+
+SocketBuffer::~SocketBuffer() =default;
+
+void SocketBuffer::Check(size_t size) {
+    if (size > _size) {
+        auto blocks = (size + BUFFER_SIZE - 1) / BUFFER_SIZE;
+        _buffer.reset(new char[blocks * BUFFER_SIZE]);
+        _size = blocks * BUFFER_SIZE;
+    }
+}
+
 } // namespace Scorpion
