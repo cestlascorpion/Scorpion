@@ -32,8 +32,7 @@ foreach (_target
         SpinLockMutex
         TimeWheel
         TokenBucket
-        UnixDGRAM
-        UnixSTREAM
+        UnixSocket
         DigraphDot)
     add_executable(${_target} "test/${_target}.cpp")
     target_link_libraries(${_target} ${PROJECT_BINARY_DIR}/libScorpion.a)

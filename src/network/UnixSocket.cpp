@@ -26,16 +26,14 @@ static int Poll(int soxFd, short expect, short *result, int timeout) {
     return ret;
 }
 
-UnixSocket::UnixSocket(const char *path, int type)
+UnixSocket::UnixSocket(const char *path)
     : _sox(-1)
-    , _type(type)
     , _path() {
     strncpy(_path, path, sizeof(_path));
 }
 
-UnixSocket::UnixSocket(int fd, int type)
-    : _sox(fd)
-    , _type(type)
+UnixSocket::UnixSocket(int sox)
+    : _sox(sox)
     , _path() {}
 
 UnixSocket::~UnixSocket() {
@@ -51,7 +49,7 @@ int UnixSocket::Create() {
     if (_sox != -1) {
         return -1;
     }
-    _sox = socket(AF_UNIX, _type, 0);
+    _sox = socket(AF_UNIX, SOCK_STREAM, 0);
     if (_sox == -1) {
         printf("socket err %d %s\n", errno, strerror(errno));
         return -1;
@@ -82,12 +80,60 @@ int UnixSocket::Destroy() {
     return 0;
 }
 
+int UnixSocket::Send(const void *buffer, size_t length) {
+    return (int)sendPacket(getSox(), buffer, length);
+}
+
+int UnixSocket::Recv(void *buffer, size_t length) {
+    return (int)recvPacket(getSox(), buffer, length);
+}
+
 int UnixSocket::getSox() const {
     return _sox;
 }
 
-int UnixSocket::getType() const {
-    return _type;
+ssize_t UnixSocket::sendPacket(int sox, const void *buffer, size_t length) {
+    const char *cursor = (const char *)buffer;
+    auto left = (ssize_t)length;
+    while (left > 0) {
+        auto byte = send(sox, cursor, (size_t)left, 0);
+        if (byte > 0) {
+            left -= byte;
+            cursor += byte;
+            continue;
+        }
+        if (errno == EINTR) {
+            continue;
+        } else {
+            printf("write err %d %s\n", errno, strerror(errno));
+            return -1;
+        }
+    }
+    return (ssize_t)length - left;
+}
+
+ssize_t UnixSocket::recvPacket(int sox, void *buffer, size_t length) {
+    char *cursor = (char *)buffer;
+    auto left = (ssize_t)length;
+    while (left > 0) {
+        auto byte = recv(sox, cursor, (size_t)left, 0);
+        if (byte > 0) {
+            left -= byte;
+            cursor += byte;
+            continue;
+        }
+        if (byte == 0) {
+            printf("closed by peer\n");
+            return -1;
+        }
+        if (errno == EINTR) {
+            continue;
+        } else {
+            printf("read err %d %s\n", errno, strerror(errno));
+            return -1;
+        }
+    }
+    return (ssize_t)length - left;
 }
 
 int UnixSocket::setBlock(int sox, bool block) {
@@ -160,60 +206,15 @@ int UnixSocket::checkConnection(int sox) {
     return -1;
 }
 
-ssize_t UnixSocket::Send(int sox, const void *buffer, size_t length) {
-    const char *cursor = (const char *)buffer;
-    auto left = (ssize_t)length;
-    while (left > 0) {
-        auto byte = send(sox, cursor, (size_t)left, 0);
-        if (byte > 0) {
-            left -= byte;
-            cursor += byte;
-            continue;
-        }
-        if (errno == EINTR) {
-            continue;
-        } else {
-            printf("write err %d %s\n", errno, strerror(errno));
-            return -1;
-        }
-    }
-    return (ssize_t)length - left;
-}
+UnixClient::UnixClient(const char *path)
+    : UnixSocket(path) {}
 
-ssize_t UnixSocket::Recv(int sox, void *buffer, size_t length, bool wait) {
-    // todo MSG_TRUNC
-    char *cursor = (char *)buffer;
-    auto left = (ssize_t)length;
-    while (left > 0) {
-        auto byte = recv(sox, cursor, (size_t)left, 0);
-        if (byte > 0) {
-            left -= byte;
-            cursor += byte;
-            continue;
-        }
-        if (byte == 0) {
-            printf("closed by peer\n");
-            return -1;
-        }
-        if (errno == EINTR) {
-            continue;
-        } else {
-            printf("read err %d %s\n", errno, strerror(errno));
-            return -1;
-        }
-    }
-    return (ssize_t)length - left;
-}
+UnixClient::UnixClient(int fd)
+    : UnixSocket(fd) {}
 
-UnixSoxClient::UnixSoxClient(const char *path, int type)
-    : UnixSocket(path, type) {}
+UnixClient::~UnixClient() = default;
 
-UnixSoxClient::UnixSoxClient(int fd, int type)
-    : UnixSocket(fd, type) {}
-
-UnixSoxClient::~UnixSoxClient() = default;
-
-int UnixSoxClient::Connect(const char *server) {
+int UnixClient::Connect(const char *server) {
     if (server == nullptr) {
         return -1;
     }
@@ -265,16 +266,12 @@ int UnixSoxClient::Connect(const char *server) {
     return 0;
 }
 
-UnixSoxServer::UnixSoxServer(const char *path, int type)
-    : UnixSocket(path, type) {}
+UnixServer::UnixServer(const char *path)
+    : UnixSocket(path) {}
 
-UnixSoxServer::~UnixSoxServer() = default;
+UnixServer::~UnixServer() = default;
 
-int UnixSoxServer::Listen() {
-    if (getType() == SOCK_DGRAM) {
-        printf("no need to call Listen() for datagram type\n");
-        return -1;
-    }
+int UnixServer::Listen() {
     if (getSox() == -1) {
         printf("create a socket first\n");
         return -1;
@@ -286,11 +283,7 @@ int UnixSoxServer::Listen() {
     return 0;
 }
 
-std::unique_ptr<UnixSoxClient> UnixSoxServer::Accept() {
-    if (getType() == SOCK_DGRAM) {
-        printf("no need to call Accept() for datagram type\n");
-        return nullptr;
-    }
+std::unique_ptr<UnixClient> UnixServer::Accept() {
     if (getSox() == -1) {
         printf("create a socket first\n");
         return nullptr;
@@ -310,24 +303,10 @@ std::unique_ptr<UnixSoxClient> UnixSoxServer::Accept() {
                 break;
             }
         } else {
-            return std::make_unique<UnixSoxClient>(ret, _type);
+            return std::make_unique<UnixClient>(ret);
         }
     }
     return nullptr;
-}
-
-SocketBuffer::SocketBuffer(size_t size)
-    : _size(size)
-    , _buffer(new char[size]) {}
-
-SocketBuffer::~SocketBuffer() =default;
-
-void SocketBuffer::Check(size_t size) {
-    if (size > _size) {
-        auto blocks = (size + BUFFER_SIZE - 1) / BUFFER_SIZE;
-        _buffer.reset(new char[blocks * BUFFER_SIZE]);
-        _size = blocks * BUFFER_SIZE;
-    }
 }
 
 } // namespace Scorpion
