@@ -10,40 +10,6 @@
 namespace Scorpion {
 namespace MySQL {
 
-class Parameter {
-public:
-    enum ParamType {
-        INTEGER = 0,
-        STRING = 1,
-        BLOB = 2,
-        INT64_VECTOR = 3,
-        STRING_VECTOR = 4,
-        UINT_VECTOR = 5,
-    } type;
-
-    union {
-        int64_t integer;
-        const char *string;
-        const std::string *blob;
-        const std::vector<uint32_t> *uint_vec;
-        const std::vector<int64_t> *int64_vec;
-        const std::vector<std::string> *string_vec;
-    } data;
-
-public:
-    explicit Parameter(int8_t i);
-    explicit Parameter(int16_t i);
-    explicit Parameter(int32_t i);
-    explicit Parameter(uint32_t i);
-    explicit Parameter(int64_t i);
-    explicit Parameter(uint64_t i);
-    explicit Parameter(const char *str);
-    explicit Parameter(const std::string &blob);
-    explicit Parameter(const std::vector<uint32_t> &vec);
-    explicit Parameter(const std::vector<int64_t> &vec);
-    explicit Parameter(const std::vector<std::string> &vec);
-};
-
 class Column {
 public:
     Column(const char *data, unsigned int size);
@@ -118,6 +84,71 @@ private:
     unsigned long _lastID;
     unsigned int _columns;
 };
+
+class Parameter {
+public:
+    enum ParamType {
+        INTEGER = 0,
+        STRING = 1,
+        BLOB = 2,
+        INT64_VECTOR = 3,
+        STRING_VECTOR = 4,
+        UINT_VECTOR = 5,
+    } type;
+
+    union {
+        int64_t integer;
+        const char *string;
+        const std::string *blob;
+        const std::vector<unsigned int> *uint_vec;
+        const std::vector<long> *int64_vec;
+        const std::vector<std::string> *string_vec;
+    } data;
+
+public:
+    explicit Parameter(int8_t i);
+    explicit Parameter(int16_t i);
+    explicit Parameter(int32_t i);
+    explicit Parameter(uint32_t i);
+    explicit Parameter(int64_t i);
+    explicit Parameter(uint64_t i);
+    explicit Parameter(const char *str);
+    explicit Parameter(const std::string &blob);
+    explicit Parameter(const std::vector<uint32_t> &vec);
+    explicit Parameter(const std::vector<int64_t> &vec);
+    explicit Parameter(const std::vector<std::string> &vec);
+};
+
+class Statement {
+public:
+    explicit Statement(MYSQL *mysql);
+    ~Statement();
+
+public:
+    Statement &operator<<(int i);
+    Statement &operator<<(unsigned int i);
+    Statement &operator<<(unsigned long i);
+    Statement &operator<<(const char *str);
+    Statement &operator<<(const std::string &str);
+    std::string escape(const std::string &fr);
+    std::string escapeNoQuote(const std::string &fr);
+    std::string join(const std::vector<uint32_t> &vec, const char *c);
+    std::string join(const std::vector<int64_t> &vec, const char *c);
+    std::string join(const std::vector<std::string> &vec, const char *c);
+    void prepare(const std::string &sql);
+    const std::string &preview() const;
+    void bindParams(const std::vector<Parameter> &param);
+    ResultSet execute();
+
+private:
+    std::string::size_type bindInt(std::string::size_type pos, const char *from, long i);
+    std::string::size_type bindString(std::string::size_type pos, const char *from, const char *data, size_t size);
+
+private:
+    MYSQL *_mysql;
+    std::string _sql;
+};
+
 
 } // namespace MySQL
 } // namespace Scorpion
