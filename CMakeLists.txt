@@ -15,8 +15,8 @@ include_directories(
         src/utilities
         test)
 
-file(GLOB_RECURSE SRCS src/*.cpp src/*/*.cpp src/*/*/*.cpp)
-file(GLOB_RECURSE HDRS src/*.h src/*/*.h src/*/*/*.h)
+file(GLOB_RECURSE SRCS src/*.cpp src/*/*.cpp)
+file(GLOB_RECURSE HDRS src/*.h src/*/*.h)
 
 add_library(Scorpion STATIC ${SRCS} ${HDRS})
 
