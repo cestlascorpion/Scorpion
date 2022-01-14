@@ -6,7 +6,7 @@
 namespace scorpion {
 
 using namespace std;
-using cbType = function<void()>;
+using cbType = function<int()>;
 
 constexpr unsigned kTimeWheelSpan = 1;
 constexpr unsigned kTimeWheelSize = 10;
@@ -42,6 +42,7 @@ struct TimeWheelRaw::Impl {
         _slots.resize(size);
     }
 };
+
 } // namespace scorpion
 
 namespace scorpion {
@@ -55,7 +56,7 @@ void TimeWheelRaw::Add(cbType &&cb, unsigned interval, int loop) {
     auto ticks = interval < _impl->_span ? 1u : interval / _impl->_span;
     auto rotation = ticks / _impl->_size;
     auto index = (_impl->_cursor + ticks % _impl->_size) % _impl->_size;
-    auto event = unique_ptr<CEvent>(new CEvent(interval, rotation, loop, forward<cbType>(cb)));
+    auto event = make_unique<CEvent>(interval, rotation, loop, forward<cbType>(cb));
     _impl->_slots[index].push_back(move(event));
 }
 

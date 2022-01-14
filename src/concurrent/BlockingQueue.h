@@ -90,11 +90,11 @@ private:
         T value;
         Node *next;
 
-        Node() {}
-        Node(const T &v)
+        Node() = default;
+        explicit Node(const T &v)
             : value(v)
             , next(nullptr) {}
-        Node(T &&v)
+        explicit Node(T &&v)
             : value(std::move(v))
             , next(nullptr) {}
     };

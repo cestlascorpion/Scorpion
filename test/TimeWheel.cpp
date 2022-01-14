@@ -12,11 +12,26 @@ void testRaw() {
     TimeWheelRaw twr;
 
     for (auto i = 1u; i <= 15; ++i) {
-        twr.Add([=]() { printf("[%ld] once id %u\n", time(nullptr), i); }, i, 1);
+        twr.Add(
+            [=]() {
+                printf("[%ld] once id %u\n", time(nullptr), i);
+                return 0;
+            },
+            i, 1);
     }
 
-    twr.Add([]() { printf("[%ld] loop inter 3\n", time(nullptr)); }, 3, -1);
-    twr.Add([]() { printf("[%ld] loop inter 5\n", time(nullptr)); }, 5, 2);
+    twr.Add(
+        []() {
+            printf("[%ld] loop inter 3\n", time(nullptr));
+            return 0;
+        },
+        3, -1);
+    twr.Add(
+        []() {
+            printf("[%ld] loop inter 5\n", time(nullptr));
+            return 0;
+        },
+        5, 2);
     twr.Dump();
 
     for (int i = 0; i < 20; ++i) {
@@ -31,7 +46,12 @@ void test() {
     TimeWheel<Resolution> tw(Async);
     thread t1([&]() {
         for (auto i = 1u; i <= 15; ++i) {
-            tw.Add([=]() { printf("[%ld] once id %u\n", time(nullptr), i); }, i, 1);
+            tw.Add(
+                [=]() {
+                    printf("[%ld] once id %u\n", time(nullptr), i);
+                    return 0;
+                },
+                i, 1);
         }
     });
     thread t2([&]() {
@@ -42,6 +62,7 @@ void test() {
                     this_thread::sleep_for(seconds(3));
                 }
                 printf("[%ld] loop inter 3 end\n", time(nullptr));
+                return 0;
             },
             3, -1);
     });
@@ -53,6 +74,7 @@ void test() {
                     this_thread::sleep_for(seconds(5));
                 }
                 printf("[%ld] loop inter 5 end\n", time(nullptr));
+                return 0;
             },
             5, 2);
     });
