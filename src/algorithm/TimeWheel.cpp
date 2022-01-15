@@ -1,6 +1,8 @@
 #include "TimeWheel.h"
+#include "ThreadPool.h"
 
 #include <list>
+#include <memory>
 #include <vector>
 
 namespace scorpion {
@@ -33,13 +35,18 @@ struct TimeWheelRaw::Impl {
     const unsigned _size;
     unsigned _cursor;
     vector<list<unique_ptr<CEvent>>> _slots;
+    unique_ptr<ThreadPool> _pool;
 
     explicit Impl(bool async, unsigned span, unsigned size)
         : _async(async)
         , _span(span)
         , _size(size)
-        , _cursor(0) {
+        , _cursor(0)
+        , _pool(nullptr) {
         _slots.resize(size);
+        if (_async) {
+            _pool = std::make_unique<ThreadPool>(3,1204);
+        }
     }
 };
 
@@ -69,8 +76,11 @@ void TimeWheelRaw::Tick() {
                 // async(launch::async, (*iter)->_callback);
 
                 // Note: start new thread is a bad idea, thread pool may be a good solution.
-                thread t((*iter)->_callback);
-                t.detach();
+                // thread t((*iter)->_callback);
+                // t.detach();
+
+                // how about a thread pool?
+                _impl->_pool->Add(forward<cbType>((*iter)->_callback));
             } else {
                 (*iter)->_callback();
             }

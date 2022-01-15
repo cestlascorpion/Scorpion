@@ -4,8 +4,7 @@ using namespace std;
 using namespace scorpion;
 
 int main() {
-    // TODO: BUG HERE
-    ThreadPool tp(1, 1);
+    ThreadPool tp(3, 1024); // BUG with Ubuntu 18.04/GCC-7 ❓
 
     for (int i = 0; i < 1024; i++) {
         tp.Add([=]() {
