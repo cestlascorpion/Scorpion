@@ -80,7 +80,8 @@ void TimeWheelRaw::Tick() {
                 // t.detach();
 
                 // how about a thread pool?
-                _impl->_pool->Add(forward<cbType>((*iter)->_callback));
+                auto cb = (*iter)->_callback; // copy
+                _impl->_pool->Add(forward<cbType>(cb));
             } else {
                 (*iter)->_callback();
             }
