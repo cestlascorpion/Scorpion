@@ -23,7 +23,7 @@ public:
     bool grant() {
         auto now = std::chrono::steady_clock::now();
         auto out = (now - _ts).count() * _rate;
-        _water = std::max(0l, _water - out);
+        _water = std::max(int64_t(0), _water - out);
         _ts = now;
         if (_water + 1l < _size) {
             ++_water;
