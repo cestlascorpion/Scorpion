@@ -14,7 +14,7 @@ const int kMaxThreads = 16;
 static_assert((kMaxThreads & (kMaxThreads - 1)) == 0, "Make sure kMaxThreads == 2^n");
 
 int maxElements;
-BlockingQueue<int> q;
+BlockingQueue<int> q(1024);
 atomic<int> cnt(0);
 atomic<bool> start(false);
 unordered_map<int, int *> elements2timespan;
@@ -32,57 +32,12 @@ void onPop() {
     while (!start) {
         this_thread::yield();
     }
-    int x;
+    int x = 0;
     for (; cnt.load(memory_order_relaxed) < maxElements;) {
         if (q.TryPop(x)) {
             cnt.fetch_add(1, memory_order_relaxed);
         }
     }
-}
-
-void TestConcurrentPush() {
-    vector<thread> threads;
-    for (int i = 0; i < kMaxThreads; ++i) {
-        threads.emplace_back(onPush, kMaxThreads);
-    }
-
-    auto t1_ = chrono::steady_clock::now();
-    start = true;
-    for (size_t i = 0; i < kMaxThreads; ++i) {
-        threads[i].join();
-    }
-    auto t2_ = chrono::steady_clock::now();
-
-    assert(static_cast<int>(q.Size()) == maxElements);
-    auto ms = chrono::duration_cast<chrono::milliseconds>(t2_ - t1_).count();
-    elements2timespan[maxElements][0] += (int)ms;
-    cout << maxElements << " elements push, timespan=" << ms << "ms"
-         << "\n";
-    start = false;
-}
-
-void TestConcurrentPop() {
-    vector<thread> threads;
-    for (int i = 0; i < kMaxThreads; ++i) {
-        threads.emplace_back(onPop);
-    }
-
-    cnt = 0;
-    auto t1_ = chrono::steady_clock::now();
-    start = true;
-    for (size_t i = 0; i < kMaxThreads; ++i) {
-        threads[i].join();
-    }
-    auto t2_ = chrono::steady_clock::now();
-
-    assert(static_cast<int>(q.Size()) == 0 && cnt == maxElements);
-    auto ms = chrono::duration_cast<chrono::milliseconds>(t2_ - t1_).count();
-    elements2timespan[maxElements][1] += (int)ms;
-    cout << maxElements << " elements pop, timespan=" << ms << "ms"
-         << "\n";
-
-    cnt = 0;
-    start = false;
 }
 
 void TestConcurrentPushAndPop() {
@@ -121,7 +76,7 @@ auto onPop_with_count = [](unordered_map<int, int> &element2count) {
     while (!start) {
         this_thread::yield();
     }
-    int x;
+    int x = 0;
     for (; cnt.load(memory_order_relaxed) < maxElements;) {
         if (q.TryPop(x)) {
             cnt.fetch_add(1, memory_order_relaxed);
@@ -184,8 +139,6 @@ int main() {
     for (int i = 0; i < 10; ++i) {
         for (int element : elements) {
             maxElements = element;
-            TestConcurrentPush();
-            TestConcurrentPop();
             TestConcurrentPushAndPop();
             cout << "\n";
         }

@@ -1,8 +1,3 @@
-/**
- * A simple BlockingQueue implemented in c++17 by bhhbazinga(https://github.com/bhhbazinga).
- *
- */
-
 #pragma once
 
 #include <atomic>
@@ -14,111 +9,117 @@ namespace scorpion {
 template <typename T>
 class BlockingQueue {
 public:
-    BlockingQueue()
-        : head_(new Node)
-        , tail_(head_)
-        , size_(0) {}
+    explicit BlockingQueue(size_t capacity)
+        : _capacity(capacity)
+        , _head(new Node)
+        , _tail(_head)
+        , _size(0) {}
 
     ~BlockingQueue() {
-        T value;
-        while (TryPop(value))
-            ;
-        delete head_;
+        T v;
+        while (TryPop(v)) {
+        }
+        delete _head;
     }
 
     BlockingQueue(const BlockingQueue &other) = delete;
-    BlockingQueue(BlockingQueue &&other) = delete;
-
     BlockingQueue &operator=(const BlockingQueue &other) = delete;
-    BlockingQueue &operator=(BlockingQueue &&other) = delete;
 
 public:
-    void Push(const T &value) {
-        std::lock_guard<std::mutex> lk(tail_mutex_);
-        tail_->value = value;
-        InternalPush();
+    void Push(const T &v) noexcept {
+        static_assert(std::is_nothrow_copy_constructible<T>::value, "T must be nothrow copy constructible");
+        Emplace(v);
     }
 
-    void Push(T &&value) {
-        std::lock_guard<std::mutex> lk(tail_mutex_);
-        tail_->value = std::move(value);
-        InternalPush();
-        return tail_->value;
+    template <typename P, typename = typename std::enable_if<std::is_nothrow_constructible<T, P &&>::value>::type>
+    void Push(P &&v) noexcept {
+        Emplace(std::forward<P>(v));
     }
 
-    bool TryPop(T &value) {
-        std::unique_lock<std::mutex> lk(head_mutex_);
-        if (head_ == get_tail()) {
+    template <typename... Args>
+    void Emplace(Args &&...args) noexcept {
+        static_assert(std::is_nothrow_constructible<T, Args &&...>::value,
+                      "T must be nothrow constructible with Args&&...");
+        std::unique_lock<std::mutex> lock(_tail_mtx);
+        _not_full.wait(lock, [this]() { return _size.load(std::memory_order_relaxed) < _capacity; });
+        _tail->value = T(std::forward<Args>(args)...);
+        Node *new_tail = new Node;
+        _tail->next = new_tail;
+        _tail = new_tail;
+        lock.unlock();
+
+        _size.fetch_add(1, std::memory_order_relaxed);
+        _not_empty.notify_one();
+    }
+
+    void Pop(T &v) noexcept {
+        std::unique_lock<std::mutex> lock(_head_mtx);
+        _not_empty.wait(lock, [this]() { return _head != get_tail(); });
+        Node *old_head = _head;
+        v = std::move(old_head->value);
+        _head = old_head->next;
+        lock.unlock();
+
+        _size.fetch_sub(1);
+        _not_full.notify_one();
+        delete old_head;
+    }
+
+    bool TryPop(T &v) noexcept {
+        std::unique_lock<std::mutex> lock(_head_mtx);
+        if (_head == get_tail()) {
             return false;
         }
 
-        Node *old_head = head_;
-        value = std::move(old_head->value);
-        head_ = old_head->next;
-        lk.unlock();
+        Node *old_head = _head;
+        v = std::move(_head->value);
+        _head = old_head->next;
+        lock.unlock();
 
-        size_.fetch_sub(1, std::memory_order_release);
+        _size.fetch_sub(1);
+        _not_full.notify_one();
         delete old_head;
         return true;
     }
 
-    T Pop() {
-        std::unique_lock<std::mutex> lk(head_mutex_);
-        cond_var_.wait(lk, [this] { return head_ != get_tail(); });
-
-        Node *old_head = head_;
-        T value = std::move(old_head->value);
-        head_ = old_head->next;
-        lk.unlock();
-
-        size_.fetch_sub(1, std::memory_order_release);
-        delete old_head;
-        return value;
+    size_t Size() const {
+        return _size.load(std::memory_order_relaxed);
     }
 
     bool Empty() const {
-        std::unique_lock<std::mutex> lk(head_mutex_);
-        return head_ == get_tail();
-    }
-
-    size_t Size() const {
-        return size_.load(std::memory_order_acquire);
+        std::lock_guard<std::mutex> lock(_head_mtx);
+        return _head == get_tail();
     }
 
 private:
+    static_assert(std::is_nothrow_copy_assignable<T>::value || std::is_nothrow_move_assignable<T>::value,
+                  "T must be nothrow copy or move assignable");
+    static_assert(std::is_nothrow_destructible<T>::value, "T must be nothrow destructible");
+
     struct Node {
         T value;
         Node *next;
 
         Node() = default;
-        explicit Node(const T &v)
-            : value(v)
-            , next(nullptr) {}
-        explicit Node(T &&v)
+        explicit Node(T v)
             : value(std::move(v))
             , next(nullptr) {}
     };
 
-    void InternalPush() {
-        Node *new_tail = new Node;
-        tail_->next = new_tail;
-        tail_ = new_tail;
-        size_.fetch_add(1, std::memory_order_release);
-        cond_var_.notify_one();
-    }
-
     Node *get_tail() const {
-        std::lock_guard<std::mutex> lk(tail_mutex_);
-        return tail_;
+        std::lock_guard<std::mutex> lock(_tail_mtx);
+        return _tail;
     }
 
 private:
-    mutable std::mutex head_mutex_;
-    mutable std::mutex tail_mutex_;
-    std::condition_variable cond_var_;
-    Node *head_;
-    Node *tail_;
-    std::atomic<size_t> size_;
+    const size_t _capacity;
+    Node *_head;
+    Node *_tail;
+    std::atomic<size_t> _size;
+    mutable std::mutex _head_mtx;
+    mutable std::mutex _tail_mtx;
+    std::condition_variable _not_empty;
+    std::condition_variable _not_full;
 };
 
 } // namespace scorpion
