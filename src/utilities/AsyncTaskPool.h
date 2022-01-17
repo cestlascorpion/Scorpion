@@ -43,7 +43,7 @@ public:
         : _id(0)
         , _ts(std::chrono::steady_clock::now()) {}
 
-    explicit Task(unsigned id, std::chrono::time_point<std::chrono::steady_clock> ts, std::function<int()> &&func)
+    Task(unsigned id, std::chrono::time_point<std::chrono::steady_clock> ts, std::function<int()> &&func)
         : _id(id)
         , _ts(ts)
         , _func(std::forward<std::function<int()>>(func)) {}
