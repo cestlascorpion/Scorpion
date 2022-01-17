@@ -7,11 +7,11 @@ namespace scorpion {
 
 class ThreadPool {
 public:
-    explicit ThreadPool(unsigned size, unsigned capacity);
+    explicit ThreadPool(unsigned size);
     ~ThreadPool();
 
 public:
-    bool Add(std::function<int()> &&cb);
+    bool Push(std::function<int()> &&cb);
 
 private:
     struct Impl;

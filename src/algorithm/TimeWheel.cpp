@@ -30,6 +30,8 @@ struct CEvent {
 };
 
 struct TimeWheelRaw::Impl {
+    static constexpr size_t kDefaultThreadNumber = 3;
+
     const bool _async;
     const unsigned _span;
     const unsigned _size;
@@ -37,7 +39,7 @@ struct TimeWheelRaw::Impl {
     vector<list<unique_ptr<CEvent>>> _slots;
     unique_ptr<ThreadPool> _pool;
 
-    explicit Impl(bool async, unsigned span, unsigned size)
+    Impl(bool async, unsigned span, unsigned size)
         : _async(async)
         , _span(span)
         , _size(size)
@@ -45,7 +47,7 @@ struct TimeWheelRaw::Impl {
         , _pool(nullptr) {
         _slots.resize(size);
         if (_async) {
-            _pool = std::make_unique<ThreadPool>(3,1204);
+            _pool = std::make_unique<ThreadPool>(kDefaultThreadNumber);
         }
     }
 };
@@ -81,7 +83,7 @@ void TimeWheelRaw::Tick() {
 
                 // how about a thread pool?
                 auto cb = (*iter)->_callback; // copy
-                _impl->_pool->Add(forward<cbType>(cb));
+                _impl->_pool->Push(forward<cbType>(cb));
             } else {
                 (*iter)->_callback();
             }
