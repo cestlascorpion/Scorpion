@@ -168,6 +168,8 @@ protected:
                 task._func();
             } catch (std::exception &e) {
                 printf("[Warn] task throw exception %s\n", e.what());
+            } catch (...) {
+                printf("[Warn] task throw non-std::exception\n");
             }
         } else {
             printf("[Warn] task timeout %u wait %lld ms\n", task._id, wait);
@@ -351,6 +353,8 @@ protected:
                 task._func();
             } catch (std::exception &e) {
                 printf("[Warn] task throw exception %s\n", e.what());
+            } catch (...) {
+                printf("[Warn] task throw non-std::exception\n");
             }
         } else {
             printf("[Warn] task timeout %u wait %lld ms\n", task._id, wait);
