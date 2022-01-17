@@ -2,6 +2,7 @@
  * specialization version: Worker has a private mpmc queue and observes another one.
  *
  * Key Features:
+ * 0. Timeout task will be ignored.
  * 1. mpmc + stealing -> task is executed out of order.
  * 2. Submitted task will be assigned with the round-robin algorithm.
  * 3. Each worker has its own queue, it also can steal task from next worker if necessary.
@@ -14,6 +15,7 @@
  * specialization version: Worker has a private mpmc queue.
  *
  * Key Features:
+ * 0. Timeout task will be ignored.
  * 1. mpsc -> task of the same queue is executed in order.
  * 2. Submitted task will be assigned with the hash algorithm.
  * 3. Each worker has its own queue which is private.
