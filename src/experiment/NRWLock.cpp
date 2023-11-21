@@ -6,8 +6,6 @@ namespace scorpion {
 
 NRWLock::NRWLock()
     : _use_double(true)
-    , _lock_name("")
-    , _extra_name("")
     , _lock(nullptr)
     , _extra(nullptr) {}
 
