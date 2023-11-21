@@ -1,8 +1,6 @@
 #include "CMDStats.h"
 
-#include <algorithm>
 #include <atomic>
-#include <chrono>
 #include <set>
 #include <sys/wait.h>
 #include <thread>
@@ -85,8 +83,8 @@ void func(const uint32_t kWorkerNum, const uint32_t kRunSec) {
         sum += cost[i][0];
         num += cost[i][1];
     }
-    printf("[%d] *report: %lu ns\n", getpid(), num > 0 ? sum / num : 0);
-    printf("[%d] collect: %lu ns\n", getpid(), cost[kWorkerNum][1] > 0 ? cost[kWorkerNum][0] / cost[kWorkerNum][1] : 0);
+    printf("[%d] *report: %llu ns\n", getpid(), num > 0 ? sum / num : 0);
+    printf("[%d] collect: %llu ns\n", getpid(), cost[kWorkerNum][1] > 0 ? cost[kWorkerNum][0] / cost[kWorkerNum][1] : 0);
 }
 
 int main(int argc, char **argv) {

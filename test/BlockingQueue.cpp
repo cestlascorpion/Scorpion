@@ -1,7 +1,6 @@
 #include "BlockingQueue.h"
 
 #include <cassert>
-#include <chrono>
 #include <iostream>
 #include <thread>
 #include <unordered_map>

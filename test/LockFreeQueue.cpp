@@ -3,8 +3,6 @@
 #include "SPSCQueue.h"
 
 #include <atomic>
-#include <chrono>
-#include <cstddef>
 #include <memory>
 #include <thread>
 #include <vector>

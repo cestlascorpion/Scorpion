@@ -59,11 +59,11 @@ ThreadPool::ThreadPool(unsigned int size)
 
 ThreadPool::~ThreadPool() = default;
 
-bool ThreadPool::Push(function<int()> &&cb) {
+bool ThreadPool::Push(function<int()> cb) {
     if (!_impl->_running.load(std::memory_order_relaxed)) {
         return false;
     }
-    _impl->_queue->Push(std::forward<cbType>(cb));
+    _impl->_queue->Push(std::move(cb));
     return true;
 }
 

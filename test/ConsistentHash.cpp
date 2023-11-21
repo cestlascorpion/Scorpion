@@ -1,10 +1,7 @@
 #include "ConsistentHash.h"
 
-#include <algorithm>
 #include <iostream>
-#include <set>
 #include <unordered_map>
-#include <vector>
 
 using namespace std;
 using namespace scorpion;

@@ -19,11 +19,11 @@ struct CEvent {
     int _loop;
     cbType _callback;
 
-    CEvent(unsigned interval, unsigned rotation, int loop, cbType &&cb)
+    CEvent(unsigned interval, unsigned rotation, int loop, cbType cb)
         : _interval(interval)
         , _rotation(rotation)
         , _loop(loop)
-        , _callback(std::forward<cbType>(cb)) {}
+        , _callback(std::move(cb)) {}
 
     CEvent(const CEvent &) = delete;
     CEvent &operator=(const CEvent &) = delete;
@@ -61,11 +61,11 @@ TimeWheelRaw::TimeWheelRaw(bool async)
 
 TimeWheelRaw::~TimeWheelRaw() = default;
 
-void TimeWheelRaw::Add(cbType &&cb, unsigned interval, int loop) {
+void TimeWheelRaw::Add(cbType cb, unsigned interval, int loop) {
     auto ticks = interval < _impl->_span ? 1u : interval / _impl->_span;
     auto rotation = ticks / _impl->_size;
     auto index = (_impl->_cursor + ticks % _impl->_size) % _impl->_size;
-    auto event = make_unique<CEvent>(interval, rotation, loop, std::forward<cbType>(cb));
+    auto event = make_unique<CEvent>(interval, rotation, loop, std::move(cb));
     _impl->_slots[index].push_back(std::move(event));
 }
 
@@ -83,7 +83,7 @@ void TimeWheelRaw::Tick() {
 
                 // how about a thread pool?
                 auto cb = (*iter)->_callback; // copy
-                _impl->_pool->Push(std::forward<cbType>(cb));
+                _impl->_pool->Push(std::move(cb));
             } else {
                 (*iter)->_callback();
             }

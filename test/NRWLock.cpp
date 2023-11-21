@@ -1,7 +1,5 @@
-
 #include "NRWLock.h"
 
-#include <csignal>
 #include <sys/wait.h>
 #include <unistd.h>
 

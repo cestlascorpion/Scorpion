@@ -45,10 +45,10 @@ public:
         : _id(0)
         , _ts(std::chrono::steady_clock::now()) {}
 
-    Task(unsigned id, std::chrono::time_point<std::chrono::steady_clock> ts, std::function<int()> &&func)
+    Task(unsigned id, std::chrono::time_point<std::chrono::steady_clock> ts, std::function<int()> func)
         : _id(id)
         , _ts(ts)
-        , _func(std::forward<std::function<int()>>(func)) {}
+        , _func(std::move(func)) {}
 
     // non copyable
     Task(const Task &) = delete;
@@ -146,12 +146,12 @@ public:
         return true;
     }
 
-    virtual bool Add(Task &&task) {
+    virtual bool Add(Task task) {
         if (_local == nullptr) {
             return false;
         }
         unsigned count = 0;
-        while (!_local->TryPush(std::forward<Task>(task))) {
+        while (!_local->TryPush(std::move(task))) {
             if (++count > 3) {
                 printf("[Warn] queue %u is full\n", _id);
                 return false;
@@ -235,12 +235,12 @@ public:
         }
     }
 
-    virtual bool Submit(unsigned uid, Task &&task) {
+    virtual bool Submit(unsigned uid, Task task) {
         unsigned try_count = 0;
         unsigned route_id = route(uid);
         while (try_count < _queues.size()) {
             unsigned id = (route_id + try_count) % (unsigned)_queues.size();
-            if (_workers[id]->Add(std::forward<Task>(task))) {
+            if (_workers[id]->Add(std::move(task))) {
                 return true;
             }
             ++try_count;
@@ -331,12 +331,12 @@ public:
         return true;
     }
 
-    virtual bool Add(Task &&task) {
+    virtual bool Add(Task task) {
         if (_local == nullptr) {
             return false;
         }
         unsigned count = 0;
-        while (!_local->TryPush(std::forward<Task>(task))) {
+        while (!_local->TryPush(std::move(task))) {
             if (++count > 3) {
                 printf("[Warn] queue %u is full\n", _id);
                 return false;
@@ -418,8 +418,8 @@ public:
         }
     }
 
-    virtual bool Submit(unsigned uid, Task &&task) {
-        return _workers[route(uid)]->Add(std::forward<Task>(task));
+    virtual bool Submit(unsigned uid, Task task) {
+        return _workers[route(uid)]->Add(std::move(task));
     }
 
 protected:

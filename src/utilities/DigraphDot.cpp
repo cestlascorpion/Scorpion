@@ -1,6 +1,7 @@
 #include "DigraphDot.h"
 
 #include <regex>
+#include <string.h>
 #include <unistd.h>
 #include <vector>
 

@@ -19,7 +19,7 @@ public:
     // stop the worker(eg: stop and join the thread, clean the queue is necessary)
     virtual bool Stop(bool clean) = 0;
     // add a task into the queue
-    virtual bool Add(TASK &&task) = 0;
+    virtual bool Add(TASK task) = 0;
 };
 
 template <typename TASK, typename QUEUE>
@@ -34,7 +34,7 @@ public:
     // stop and clean the task pool
     virtual void Final(bool clean) = 0;
     // submit an async task
-    virtual bool Submit(unsigned uid, TASK &&task) = 0;
+    virtual bool Submit(unsigned uid, TASK task) = 0;
 };
 
 } // namespace scorpion

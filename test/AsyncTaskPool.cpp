@@ -1,7 +1,6 @@
 #include "AsyncTaskPool.h"
 
 #include <atomic>
-#include <chrono>
 #include <memory>
 #include <thread>
 #include <vector>
@@ -52,7 +51,7 @@ private:
                 printf("==== task %u ====\n", id);
                 return 0;
             };
-            manager->Submit(id, Task(id, steady_clock::now(), move(func)));
+            manager->Submit(id, Task(id, steady_clock::now(), std::move(func)));
             this_thread::sleep_for(milliseconds(turn % 3));
         }
     }
