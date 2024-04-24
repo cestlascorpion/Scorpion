@@ -10,6 +10,7 @@ include_directories(
         src/algorithm
         src/basement
         src/concurrent
+        src/encoding
         src/experiment
         src/network
         src/utilities
@@ -25,6 +26,7 @@ foreach (_target
         BlockingQueue
         CMDStats
         ConsistentHash
+        Encoding
         IPV4Filter
         LeakyBucket
         LockFreeQueue

@@ -37,7 +37,7 @@ public:
     }
 
     template <typename... Args>
-    void Emplace(Args &&...args) noexcept {
+    void Emplace(Args &&... args) noexcept {
         static_assert(std::is_nothrow_constructible<T, Args &&...>::value,
                       "T must be nothrow constructible with Args&&...");
         std::unique_lock<std::mutex> lock(_tail_mtx);

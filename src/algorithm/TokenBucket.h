@@ -1,6 +1,6 @@
 /**
  * A implementation of token-bucket algorithm.
- * 
+ *
  */
 
 #pragma once

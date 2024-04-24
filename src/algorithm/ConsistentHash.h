@@ -1,6 +1,6 @@
 /**
  * A implementation of consistent hash algorithm.
- * 
+ *
  */
 
 #pragma once

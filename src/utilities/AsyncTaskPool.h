@@ -174,7 +174,7 @@ protected:
                 printf("[Warn] task throw non-std::exception\n");
             }
         } else {
-            printf("[Warn] task timeout %u wait %lld ms\n", task._id, wait);
+            printf("[Warn] task timeout %u wait %ld ms\n", task._id, wait);
         }
     };
 
@@ -359,7 +359,7 @@ protected:
                 printf("[Warn] task throw non-std::exception\n");
             }
         } else {
-            printf("[Warn] task timeout %u wait %lld ms\n", task._id, wait);
+            printf("[Warn] task timeout %u wait %ld ms\n", task._id, wait);
         }
     };
 

@@ -1,6 +1,6 @@
 /**
  * A implementation of leaky-bucket algorithm.
- * 
+ *
  */
 
 #pragma once

@@ -2,6 +2,7 @@
 #include "BlockingQueue.h"
 
 #include <thread>
+#include <vector>
 
 namespace scorpion {
 

@@ -1,6 +1,6 @@
 /**
  * A simple task/thread pool template.
- * 
+ *
  */
 
 #pragma once

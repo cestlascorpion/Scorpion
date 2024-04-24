@@ -3,7 +3,7 @@
  * file example:
  *     |---------|
  *     |A B C    | -> means svc.A call svc.B svc.C
- *     |B D      |    use " " to separate services, the first one is the Caller, others are callees 
+ *     |B D      |    use " " to separate services, the first one is the Caller, others are callees
  *     |D E      |
  *     |---------|
  * which means the service invocation relationship is as follows:
@@ -77,7 +77,7 @@ private:
 private:
     // eg: dot neato twopi circo osage fdp sfdp
     const std::vector<std::string> _layouts;
-    // eg: svg png jpg 
+    // eg: svg png jpg
     const std::string _format;
     // key: node->_label value: node_ptr
     std::map<std::string, std::unique_ptr<DotNode>> _nodes;

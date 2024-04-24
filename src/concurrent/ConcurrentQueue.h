@@ -1,6 +1,6 @@
 /**
  * A implementation of concurrent queue.
- * 
+ *
  */
 
 #pragma once

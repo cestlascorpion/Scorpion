@@ -1,6 +1,6 @@
 /**
  * A simple wrapper of flock.
- * 
+ *
  */
 
 #pragma once
