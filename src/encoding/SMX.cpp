@@ -12,8 +12,7 @@ using namespace Scorpion;
 namespace detail {
 
 struct BufferGuard {
-    explicit BufferGuard(size_t size)
-        : _sz(size) {
+    explicit BufferGuard(size_t size) {
         _buf = (uint8_t *)malloc(size);
     }
     ~BufferGuard() {
@@ -21,7 +20,6 @@ struct BufferGuard {
             free(_buf);
         }
     }
-    size_t _sz;
     uint8_t *_buf;
 };
 
@@ -134,30 +132,6 @@ string SMX::SM4CTREncrypt(const string &str, const string &key, const string &iv
     return string{(char *)guard._buf, length + tail};
 }
 
-string SMX::SM4GCMEncrypt(const string &str, const string &key, const string &iv, const string &aad) {
-    if (str.empty() || key.size() != SM4_KEY_SIZE || iv.size() < SM4_GCM_MIN_IV_SIZE ||
-        iv.size() > SM4_GCM_MAX_IV_SIZE) {
-        return {};
-    }
-
-    detail::BufferGuard guard(str.size() + GHASH_SIZE);
-
-    SM4_GCM_CTX ctx;
-    auto ret = sm4_gcm_encrypt_init(&ctx, (const uint8_t *)key.c_str(), key.size(), (const uint8_t *)iv.c_str(),
-                                    iv.size(), (const uint8_t *)aad.c_str(), aad.size(), GHASH_SIZE);
-    assert(ret == 1 && "sm4_gcm_encrypt_init error");
-
-    size_t length = 0;
-    ret = sm4_gcm_encrypt_update(&ctx, (const uint8_t *)str.c_str(), str.size(), guard._buf, &length);
-    assert(ret == 1 && "sm4_gcm_encrypt_update error");
-
-    size_t tail = 0;
-    ret = sm4_gcm_encrypt_finish(&ctx, guard._buf + length, &tail);
-    assert(ret == 1 && "sm4_gcm_encrypt_finish error");
-
-    return string{(char *)guard._buf, length + tail};
-}
-
 string SMX::SM4CBCDecrypt(const string &str, const string &key, const string &iv) {
     if (str.empty() || key.size() != SM4_KEY_SIZE || iv.size() != SM4_BLOCK_SIZE) {
         return {};
@@ -202,26 +176,26 @@ string SMX::SM4CTRDecrypt(const string &str, const string &key, const string &iv
     return string{(char *)guard._buf, length + tail};
 }
 
-string SMX::SM4GCMDecrypt(const string &str, const string &key, const string &iv, const string &aad) {
+string SMX::SM4GCMEncrypt(const string &str, const string &key, const string &iv, const string &aad) {
     if (str.empty() || key.size() != SM4_KEY_SIZE || iv.size() < SM4_GCM_MIN_IV_SIZE ||
         iv.size() > SM4_GCM_MAX_IV_SIZE) {
         return {};
     }
 
-    detail::BufferGuard guard(str.size());
+    detail::BufferGuard guard(str.size() + GHASH_SIZE);
 
     SM4_GCM_CTX ctx;
-    auto ret = sm4_gcm_decrypt_init(&ctx, (const uint8_t *)key.c_str(), key.size(), (const uint8_t *)iv.c_str(),
+    auto ret = sm4_gcm_encrypt_init(&ctx, (const uint8_t *)key.c_str(), key.size(), (const uint8_t *)iv.c_str(),
                                     iv.size(), (const uint8_t *)aad.c_str(), aad.size(), GHASH_SIZE);
-    assert(ret == 1 && "sm4_gcm_decrypt_init error");
+    assert(ret == 1 && "sm4_gcm_encrypt_init error");
 
     size_t length = 0;
-    ret = sm4_gcm_decrypt_update(&ctx, (const uint8_t *)str.c_str(), str.size(), guard._buf, &length);
-    assert(ret == 1 && "sm4_gcm_decrypt_update error");
+    ret = sm4_gcm_encrypt_update(&ctx, (const uint8_t *)str.c_str(), str.size(), guard._buf, &length);
+    assert(ret == 1 && "sm4_gcm_encrypt_update error");
 
     size_t tail = 0;
-    ret = sm4_gcm_decrypt_finish(&ctx, guard._buf + length, &tail);
-    assert(ret == 1 && "sm4_gcm_decrypt_finish error");
+    ret = sm4_gcm_encrypt_finish(&ctx, guard._buf + length, &tail);
+    assert(ret == 1 && "sm4_gcm_encrypt_finish error");
 
     return string{(char *)guard._buf, length + tail};
 }
@@ -270,6 +244,30 @@ string SMX::SM4CTRAndSM3HMACEncrypt(const string &str, const string &key, const 
     size_t tail = 0;
     ret = sm4_ctr_sm3_hmac_encrypt_finish(&ctx, guard._buf + length, &tail);
     assert(ret == 1 && "sm4_ctr_sm3_hmac_encrypt_finish error");
+
+    return string{(char *)guard._buf, length + tail};
+}
+
+string SMX::SM4GCMDecrypt(const string &str, const string &key, const string &iv, const string &aad) {
+    if (str.empty() || key.size() != SM4_KEY_SIZE || iv.size() < SM4_GCM_MIN_IV_SIZE ||
+        iv.size() > SM4_GCM_MAX_IV_SIZE) {
+        return {};
+    }
+
+    detail::BufferGuard guard(str.size());
+
+    SM4_GCM_CTX ctx;
+    auto ret = sm4_gcm_decrypt_init(&ctx, (const uint8_t *)key.c_str(), key.size(), (const uint8_t *)iv.c_str(),
+                                    iv.size(), (const uint8_t *)aad.c_str(), aad.size(), GHASH_SIZE);
+    assert(ret == 1 && "sm4_gcm_decrypt_init error");
+
+    size_t length = 0;
+    ret = sm4_gcm_decrypt_update(&ctx, (const uint8_t *)str.c_str(), str.size(), guard._buf, &length);
+    assert(ret == 1 && "sm4_gcm_decrypt_update error");
+
+    size_t tail = 0;
+    ret = sm4_gcm_decrypt_finish(&ctx, guard._buf + length, &tail);
+    assert(ret == 1 && "sm4_gcm_decrypt_finish error");
 
     return string{(char *)guard._buf, length + tail};
 }

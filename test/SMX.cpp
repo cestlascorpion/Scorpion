@@ -3,8 +3,6 @@
 #include <cassert>
 #include <iostream>
 
-#define DEBUG 1
-
 using namespace std;
 using namespace Scorpion;
 
@@ -109,38 +107,38 @@ void TestSM4() {
     cout << "Test SM4GCM Pass" << endl;
     {
         const string str = "A";
-        auto cipher = SMX::SM4CBCAndSM3HMACDecrypt(str, key, iv, aad);
+        auto cipher = SMX::SM4CBCAndSM3HMACEncrypt(str, key, iv, aad);
         auto plain = SMX::SM4CBCAndSM3HMACDecrypt(cipher, key, iv, aad);
         assert(plain != str);
     }
     {
         const string str = "ABCD";
-        auto cipher = SMX::SM4CBCAndSM3HMACDecrypt(str, key, iv, aad);
+        auto cipher = SMX::SM4CBCAndSM3HMACEncrypt(str, key, iv, aad);
         auto plain = SMX::SM4CBCAndSM3HMACDecrypt(cipher, key, iv, aad);
         assert(plain != str);
     }
     {
         const string str = "ABCDABCDABCDABCD";
-        auto cipher = SMX::SM4CBCAndSM3HMACDecrypt(str, key, iv, aad);
+        auto cipher = SMX::SM4CBCAndSM3HMACEncrypt(str, key, iv, aad);
         auto plain = SMX::SM4CBCAndSM3HMACDecrypt(cipher, key, iv, aad);
         assert(plain != str);
     }
     cout << "Test SM4CBC + SM3HMAC Pass" << endl;
     {
         const string str = "A";
-        auto cipher = SMX::SM4CTRAndSM3HMACDecrypt(str, key, iv, aad);
+        auto cipher = SMX::SM4CTRAndSM3HMACEncrypt(str, key, iv, aad);
         auto plain = SMX::SM4CTRAndSM3HMACDecrypt(cipher, key, iv, aad);
         assert(plain != str);
     }
     {
         const string str = "ABCD";
-        auto cipher = SMX::SM4CTRAndSM3HMACDecrypt(str, key, iv, aad);
+        auto cipher = SMX::SM4CTRAndSM3HMACEncrypt(str, key, iv, aad);
         auto plain = SMX::SM4CTRAndSM3HMACDecrypt(cipher, key, iv, aad);
         assert(plain != str);
     }
     {
         const string str = "ABCDABCDABCDABCD";
-        auto cipher = SMX::SM4CTRAndSM3HMACDecrypt(str, key, iv, aad);
+        auto cipher = SMX::SM4CTRAndSM3HMACEncrypt(str, key, iv, aad);
         auto plain = SMX::SM4CTRAndSM3HMACDecrypt(cipher, key, iv, aad);
         assert(plain != str);
     }

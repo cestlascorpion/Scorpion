@@ -38,6 +38,7 @@ public:
      * @return The SM3 HMAC hash of the file as a string.
      */
     static std::string SM3HMACFile(FILE *file, const std::string &key);
+public:
     /**
      * Encrypts a string using the SM4-CBC encryption algorithm(padding mode: PKCS7).
      *
@@ -57,17 +58,6 @@ public:
      */
     static std::string SM4CTREncrypt(const std::string &str, const std::string &key, const std::string &iv);
     /**
-     * Encrypts a string using the SM4-GCM encryption algorithm(padding mode: None).
-     *
-     * @param str The string to be encrypted.
-     * @param key The encryption key.
-     * @param iv The initialization vector.
-     * @param aad The additional authenticated data.
-     * @return The encrypted string(cipher and mac).
-     */
-    static std::string SM4GCMEncrypt(const std::string &str, const std::string &key, const std::string &iv,
-                                     const std::string &aad);
-    /**
      * Decrypts a string using the SM4-CBC encryption algorithm(padding mode: PKCS7).
      *
      * @param str The string to be decrypted.
@@ -86,15 +76,15 @@ public:
      */
     static std::string SM4CTRDecrypt(const std::string &str, const std::string &key, const std::string &iv);
     /**
-     * Decrypts a string using the SM4-GCM encryption algorithm(padding mode: None).
+     * Encrypts a string using the SM4-GCM encryption algorithm(padding mode: None).
      *
-     * @param str The string to be decrypted.
+     * @param str The string to be encrypted.
      * @param key The encryption key.
      * @param iv The initialization vector.
      * @param aad The additional authenticated data.
-     * @return The decrypted string.
+     * @return The encrypted string(cipher and mac).
      */
-    static std::string SM4GCMDecrypt(const std::string &str, const std::string &key, const std::string &iv,
+    static std::string SM4GCMEncrypt(const std::string &str, const std::string &key, const std::string &iv,
                                      const std::string &aad);
     /**
      * Encrypts a string using SM4-CBC and SM3-HMAC algorithms.
@@ -118,6 +108,17 @@ public:
      */
     static std::string SM4CTRAndSM3HMACEncrypt(const std::string &str, const std::string &key, const std::string &iv,
                                                const std::string &aad);
+    /**
+     * Decrypts a string using the SM4-GCM encryption algorithm(padding mode: None).
+     *
+     * @param str The string to be decrypted.
+     * @param key The encryption key.
+     * @param iv The initialization vector.
+     * @param aad The additional authenticated data.
+     * @return The decrypted string.
+     */
+    static std::string SM4GCMDecrypt(const std::string &str, const std::string &key, const std::string &iv,
+                                     const std::string &aad);
     /**
      * Decrypts a string using the SM4-CBC and SM3-HMAC encryption algorithms.
      *
