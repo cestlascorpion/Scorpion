@@ -14,14 +14,14 @@ public:
      * Encodes a string using Base16 encoding.
      *
      * @param str The string to be encoded.
-     * @return The Base16 encoded string.
+     * @return The Base16 encoded string(Upper-Case).
      */
     static std::string Base16Encode(const std::string &str);
     /**
      * Encodes a given string using Base32 encoding.
      *
      * @param str The string to be encoded.
-     * @return The Base32 encoded string.
+     * @return The Base32 encoded string(Upper-Case).
      */
     static std::string Base32Encode(const std::string &str);
     /**
@@ -34,14 +34,14 @@ public:
     /**
      * Decodes a Base16-encoded string.
      *
-     * @param str The Base16-encoded string to decode.
+     * @param str The Base16-encoded string to decode(Upper-Case).
      * @return The decoded string.
      */
     static std::string Base16Decode(const std::string &str);
     /**
      * Decodes a Base32 encoded string.
      *
-     * @param str The Base32 encoded string to decode.
+     * @param str The Base32 encoded string to decode(Upper-Case).
      * @return The decoded string.
      */
     static std::string Base32Decode(const std::string &str);

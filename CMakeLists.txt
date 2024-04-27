@@ -16,6 +16,8 @@ include_directories(
         src/utilities
         test)
 
+link_directories(/usr/local/lib)
+
 file(GLOB_RECURSE SRCS src/*.cpp src/*/*.cpp)
 file(GLOB_RECURSE HDRS src/*.h src/*/*.h)
 
@@ -36,7 +38,8 @@ foreach (_target
         TimeWheel
         TokenBucket
         UnixSocket
-        DigraphDot)
+        DigraphDot
+        SMX)
     add_executable(${_target} "test/${_target}.cpp")
-    target_link_libraries(${_target} ${PROJECT_BINARY_DIR}/libScorpion.a)
+    target_link_libraries(${_target} ${PROJECT_BINARY_DIR}/libScorpion.a gmssl)
 endforeach ()

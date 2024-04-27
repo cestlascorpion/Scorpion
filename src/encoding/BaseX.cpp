@@ -1,7 +1,6 @@
 #include "BaseX.h"
-#include <algorithm>
 
-#include <assert.h>
+#include <cassert>
 
 using namespace std;
 using namespace Scorpion;
