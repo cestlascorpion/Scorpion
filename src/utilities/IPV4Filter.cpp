@@ -1,7 +1,6 @@
 #include "IPV4Filter.h"
 
 #include <arpa/inet.h>
-#include <cassert>
 #include <fstream>
 
 using namespace std;
@@ -258,7 +257,6 @@ bool IPFilter::parseRule(const string &rule, uint32_t &from, uint32_t &to) {
             to = from;
         } else {
             to = from | (0xFFFFFFFF >> length);
-            assert(from <= to);
         }
     }
 

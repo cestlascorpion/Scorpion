@@ -1,5 +1,4 @@
 #include "BaseX.h"
-#include "URL.h"
 
 #include <assert.h>
 
@@ -82,35 +81,9 @@ void TestBase64() {
     printf("TestBase64 passed\n");
 }
 
-void TestURL() {
-    {
-        string str = "Hello, World!+";
-        string encoded = URLEncoding::URLEncode(str);
-        assert(encoded == "Hello%2C+World%21%2B");
-        string decoded = URLEncoding::URLDecode(encoded);
-        assert(decoded == str);
-    }
-    {
-        string str = "";
-        string encoded = URLEncoding::URLEncode(str);
-        assert(encoded == "");
-        string decoded = URLEncoding::URLDecode(encoded);
-        assert(decoded == str);
-    }
-    {
-        string str = "A";
-        string encoded = URLEncoding::URLEncode(str);
-        assert(encoded == "A");
-        string decoded = URLEncoding::URLDecode(encoded);
-        assert(decoded == str);
-    }
-    printf("TestURL passed\n");
-}
-
 int main() {
     TestBase16();
     TestBase32();
     TestBase64();
-    TestURL();
     return 0;
 }

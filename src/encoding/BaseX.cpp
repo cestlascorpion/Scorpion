@@ -1,7 +1,5 @@
 #include "BaseX.h"
 
-#include <cassert>
-
 using namespace std;
 using namespace Scorpion;
 
@@ -62,19 +60,22 @@ string BaseEncoding::Base32Encode(const string &str) {
             n1 = (((uint8_t)str[i + 0] & 0xF8) >> 3);
             break;
         default:
-            assert(false && "Invalid Base32 operation!");
+            // assert(false && "Invalid Base32 operation!");
+            return {};
         }
         i += block;
 
         // Validate
-        assert((n1 <= 31) && "Invalid Base32 n1 value!");
-        assert((n2 <= 31) && "Invalid Base32 n2 value!");
-        assert((n3 <= 31) && "Invalid Base32 n3 value!");
-        assert((n4 <= 31) && "Invalid Base32 n4 value!");
-        assert((n5 <= 31) && "Invalid Base32 n5 value!");
-        assert((n6 <= 31) && "Invalid Base32 n6 value!");
-        assert((n7 <= 31) && "Invalid Base32 n7 value!");
-        assert((n8 <= 31) && "Invalid Base32 n8 value!");
+        // assert((n1 <= 31) && "Invalid Base32 n1 value!");
+        // assert((n2 <= 31) && "Invalid Base32 n2 value!");
+        // assert((n3 <= 31) && "Invalid Base32 n3 value!");
+        // assert((n4 <= 31) && "Invalid Base32 n4 value!");
+        // assert((n5 <= 31) && "Invalid Base32 n5 value!");
+        // assert((n6 <= 31) && "Invalid Base32 n6 value!");
+        // assert((n7 <= 31) && "Invalid Base32 n7 value!");
+        // assert((n8 <= 31) && "Invalid Base32 n8 value!");
+        if ((n1 > 31) || (n2 > 31) || (n3 > 31) || (n4 > 31) || (n5 > 31) || (n6 > 31) || (n7 > 31) || (n8 > 31))
+            return {};
 
         // Padding
         switch (block) {
@@ -89,7 +90,8 @@ string BaseEncoding::Base32Encode(const string &str) {
         case 5:
             break;
         default:
-            assert(false && "Invalid Base32 operation!");
+            // assert(false && "Invalid Base32 operation!");
+            return {};
         }
 
         // 8 outputs
@@ -148,9 +150,9 @@ string BaseEncoding::Base16Decode(const string &str) {
 
     size_t ilength = str.length();
 
-    assert(((ilength % 2) == 0) && "Invalid Base16 sting!");
+    // assert(((ilength % 2) == 0) && "Invalid Base16 sting!");
     if ((ilength % 2) != 0)
-        return "";
+        return {};
 
     size_t olength = ilength / 2;
 
@@ -162,9 +164,9 @@ string BaseEncoding::Base16Decode(const string &str) {
         uint8_t b = (uint8_t)str[i++];
 
         // Validate ASCII
-        assert(((a < 0x80) && (b < 0x80)) && "Invalid Base16 content!");
+        // assert(((a < 0x80) && (b < 0x80)) && "Invalid Base16 content!");
         if ((a >= 0x80) || (b >= 0x80))
-            return "";
+            return {};
 
         // Convert ASCII to Base16
         a = base16[a];
@@ -189,9 +191,9 @@ string BaseEncoding::Base32Decode(const string &str) {
 
     size_t ilength = str.length();
 
-    assert(((ilength % 8) == 0) && "Invalid Base32 sting!");
+    // assert(((ilength % 8) == 0) && "Invalid Base32 sting!");
     if ((ilength % 8) != 0)
-        return "";
+        return {};
 
     size_t olength = (ilength / 8) * 5;
 
@@ -210,12 +212,13 @@ string BaseEncoding::Base32Decode(const string &str) {
         uint8_t n8 = (uint8_t)str[i++];
 
         // Validate ASCII
-        assert(((n1 < 0x80) && (n2 < 0x80) && (n3 < 0x80) && (n4 < 0x80) && (n5 < 0x80) && (n6 < 0x80) && (n7 < 0x80) &&
-                (n8 < 0x80)) &&
-               "Invalid Base32 content!");
+        // assert(((n1 < 0x80) && (n2 < 0x80) && (n3 < 0x80) && (n4 < 0x80) && (n5 < 0x80) && (n6 < 0x80) && (n7 < 0x80)
+        // &&
+        //         (n8 < 0x80)) &&
+        //        "Invalid Base32 content!");
         if ((n1 >= 0x80) || (n2 >= 0x80) || (n3 >= 0x80) || (n4 >= 0x80) || (n5 >= 0x80) || (n6 >= 0x80) ||
             (n7 >= 0x80) || (n8 >= 0x80))
-            return "";
+            return {};
 
         // Convert ASCII to Base32
         n1 = base32[n1];
@@ -228,15 +231,15 @@ string BaseEncoding::Base32Decode(const string &str) {
         n8 = base32[n8];
 
         // Validate Base32
-        assert(((n1 <= 31) && (n2 <= 31)) && "Invalid Base32 content!");
+        // assert(((n1 <= 31) && (n2 <= 31)) && "Invalid Base32 content!");
         if ((n1 > 31) || (n2 > 31))
-            return "";
+            return {};
 
         // The following can be padding
-        assert(((n3 <= 32) && (n4 <= 32) && (n5 <= 32) && (n6 <= 32) && (n7 <= 32) && (n8 <= 32)) &&
-               "Invalid Base32 content!");
+        // assert(((n3 <= 32) && (n4 <= 32) && (n5 <= 32) && (n6 <= 32) && (n7 <= 32) && (n8 <= 32)) &&
+        //        "Invalid Base32 content!");
         if ((n3 > 32) || (n4 > 32) || (n5 > 32) || (n6 > 32) || (n7 > 32) || (n8 > 32))
-            return "";
+            return {};
 
         // 5 outputs
         result[j++] = ((n1 & 0x1f) << 3) | ((n2 & 0x1c) >> 2);
@@ -248,12 +251,18 @@ string BaseEncoding::Base32Decode(const string &str) {
         // Padding
         if (n8 == 32) {
             result.resize(result.size() - 1);
-            assert((((n7 == 32) && (n6 == 32)) || (n7 != 32)) && "Invalid Base32 content!");
+            // assert((((n7 == 32) && (n6 == 32)) || (n7 != 32)) && "Invalid Base32 content!");
+            if (!(((n7 == 32) && (n6 == 32)) || (n7 != 32))) {
+                return {};
+            }
             if (n6 == 32) {
                 result.resize(result.size() - 1);
                 if (n5 == 32) {
                     result.resize(result.size() - 1);
-                    assert((((n4 == 32) && (n3 == 32)) || (n4 != 32)) && "Invalid Base32 content!");
+                    // assert((((n4 == 32) && (n3 == 32)) || (n4 != 32)) && "Invalid Base32 content!");
+                    if (!(((n4 == 32) && (n3 == 32)) || (n4 != 32))) {
+                        return {};
+                    }
                     if (n3 == 32) {
                         result.resize(result.size() - 1);
                     }
@@ -285,8 +294,9 @@ string BaseEncoding::Base64Decode(const string &str) {
 
     size_t ilength = str.length();
 
+    // assert((ilength % 4 == 0) && "Invalid Base64 string!");
     if (ilength % 4 != 0)
-        return "";
+        return {};
 
     size_t olength = ilength / 4 * 3;
 

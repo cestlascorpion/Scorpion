@@ -39,7 +39,8 @@ foreach (_target
         TokenBucket
         UnixSocket
         DigraphDot
-        SMX)
+        SM2
+        SM3+4)
     add_executable(${_target} "test/${_target}.cpp")
     target_link_libraries(${_target} ${PROJECT_BINARY_DIR}/libScorpion.a gmssl)
 endforeach ()
