@@ -7,6 +7,7 @@
 #include "gmssl/sm2.h"
 #include "gmssl/sm3.h"
 #include "gmssl/sm4.h"
+#include "gmssl/sm9.h"
 
 using namespace std;
 using namespace Scorpion;
@@ -27,8 +28,8 @@ struct BufferGuard {
 
 } // namespace detail
 
-int SMX::SM2KeyGen(const string &pass, FILE *publicKey, FILE *privateKey) {
-    if (pass.empty() || publicKey == nullptr || privateKey == nullptr) {
+int SMX::SM2KeyGen(const string &pass, FILE *pub, FILE *pem) {
+    if (pass.empty() || pub == nullptr || pem == nullptr) {
         return -1;
     }
     SM2_KEY key;
@@ -37,12 +38,12 @@ int SMX::SM2KeyGen(const string &pass, FILE *publicKey, FILE *privateKey) {
     if (ret != 1) {
         return -1;
     }
-    ret = sm2_private_key_info_encrypt_to_pem(&key, pass.c_str(), privateKey);
+    ret = sm2_private_key_info_encrypt_to_pem(&key, pass.c_str(), pem);
     // assert(ret == 1 && "sm2_private_key_info_encrypt_to_pem error");
     if (ret != 1) {
         return -1;
     }
-    ret = sm2_public_key_info_to_pem(&key, publicKey);
+    ret = sm2_public_key_info_to_pem(&key, pub);
     // assert(ret == 1 && "sm2_public_key_info_to_pem error");
     if (ret != 1) {
         return -1;
@@ -489,4 +490,200 @@ string SMX::SM4CTRAndSM3HMACDecrypt(const string &str, const string &key, const 
         return {};
     }
     return string{(char *)guard._buf, length + tail};
+}
+
+int SMX::SM9SignMasterKeyGen(const string &pass, FILE *pub, FILE *pem) {
+    if (pass.empty() || pub == nullptr || pem == nullptr) {
+        return -1;
+    }
+    SM9_SIGN_MASTER_KEY sign_msk;
+    auto ret = sm9_sign_master_key_generate(&sign_msk);
+    // assert(ret == 1 && "sm9_sign_master_key_generate error");
+    if (ret != 1) {
+        return -1;
+    }
+    ret = sm9_sign_master_key_info_encrypt_to_pem(&sign_msk, pass.c_str(), pem);
+    // assert(ret == 1 && "sm9_sign_master_key_info_encrypt_to_pem error");
+    if (ret != 1) {
+        return -1;
+    }
+    ret = sm9_sign_master_public_key_to_pem(&sign_msk, pub);
+    // assert(ret == 1 && "sm9_sign_master_public_key_to_pem error");
+    if (ret != 1) {
+        return -1;
+    }
+    return 0;
+}
+
+int SMX::SM9EncryptMasterKeyGen(const string &pass, FILE *pub, FILE *pem) {
+    if (pass.empty() || pub == nullptr || pem == nullptr) {
+        return -1;
+    }
+    SM9_ENC_MASTER_KEY enc_msk;
+    auto ret = sm9_enc_master_key_generate(&enc_msk);
+    // assert(ret == 1 && "sm9_enc_master_key_generate error");
+    if (ret != 1) {
+        return -1;
+    }
+    ret = sm9_enc_master_key_info_encrypt_to_pem(&enc_msk, pass.c_str(), pem);
+    // assert(ret == 1 && "sm9_enc_master_key_info_encrypt_to_pem error");
+    if (ret != 1) {
+        return -1;
+    }
+    ret = sm9_enc_master_public_key_to_pem(&enc_msk, pub);
+    // assert(ret == 1 && "sm9_enc_master_public_key_to_pem error");
+    if (ret != 1) {
+        return -1;
+    }
+    return 0;
+}
+
+int SMX::SM9SignUserKeyGen(const string &masterPass, FILE *masterPem, const string &userPass, FILE *userPem,
+                           const string &id) {
+    if (masterPass.empty() || masterPem == nullptr || userPass.empty() || userPem == nullptr) {
+        return {};
+    }
+    SM9_SIGN_MASTER_KEY sign_msk;
+    auto ret = sm9_sign_master_key_info_decrypt_from_pem(&sign_msk, masterPass.c_str(), masterPem);
+    // assert(ret == 1 && "sm9_sign_master_key_info_decrypt_from_pem error");
+    if (ret != 1) {
+        return {};
+    }
+    SM9_SIGN_KEY sign_key;
+    ret = sm9_sign_master_key_extract_key(&sign_msk, id.c_str(), id.size(), &sign_key);
+    // assert(ret == 1 && "sm9_sign_master_key_extract_key error");
+    if (ret != 1) {
+        return {};
+    }
+    ret = sm9_sign_key_info_encrypt_to_pem(&sign_key, userPass.c_str(), userPem);
+    // assert(ret == 1 && "sm9_sign_key_info_encrypt_to_pem error");
+    if (ret != 1) {
+        return {};
+    }
+    return 0;
+}
+
+int SMX::SM9EncryptUserKeyGen(const string &masterPass, FILE *masterPem, const string &userPass, FILE *userPem,
+                              const string &id) {
+    if (masterPass.empty() || masterPem == nullptr || userPass.empty() || userPem == nullptr) {
+        return {};
+    }
+    SM9_ENC_MASTER_KEY enc_msk;
+    auto ret = sm9_enc_master_key_info_decrypt_from_pem(&enc_msk, masterPass.c_str(), masterPem);
+    // assert(ret == 1 && "sm9_enc_master_key_info_decrypt_from_pem error");
+    if (ret != 1) {
+        return {};
+    }
+    SM9_ENC_KEY enc_key;
+    ret = sm9_enc_master_key_extract_key(&enc_msk, id.c_str(), id.size(), &enc_key);
+    // assert(ret == 1 && "sm9_enc_master_key_extract_key error");
+    if (ret != 1) {
+        return {};
+    }
+    ret = sm9_enc_key_info_encrypt_to_pem(&enc_key, userPass.c_str(), userPem);
+    // assert(ret == 1 && "sm9_enc_key_info_encrypt_to_pem error");
+    if (ret != 1) {
+        return {};
+    }
+    return 0;
+}
+
+string SMX::SM9Sign(const string &str, FILE *pem, const string &pass) {
+    if (str.empty() || pem == nullptr || pass.empty()) {
+        return {};
+    }
+    SM9_SIGN_KEY key;
+    auto ret = sm9_sign_key_info_decrypt_from_pem(&key, pass.c_str(), pem);
+    // assert(ret == 1 && "sm9_sign_key_info_decrypt_from_pem error");
+    if (ret != 1) {
+        return {};
+    }
+    SM9_SIGN_CTX ctx;
+    ret = sm9_sign_init(&ctx);
+    // assert(ret == 1 && "sm9_sign_init error");
+    if (ret != 1) {
+        return {};
+    }
+    ret = sm9_sign_update(&ctx, (const uint8_t *)str.c_str(), str.size());
+    // assert(ret == 1 && "sm9_sign_update error");
+    if (ret != 1) {
+        return {};
+    }
+    uint8_t sig[SM9_SIGNATURE_SIZE];
+    size_t siglen;
+    ret = sm9_sign_finish(&ctx, &key, sig, &siglen);
+    // assert(ret == 1 && "sm9_sign_finish error");
+    if (ret != 1) {
+        return {};
+    }
+    return {(char *)sig, siglen};
+}
+
+int SMX::SM9Verify(const string &str, const string &signature, FILE *pub, const string &id) {
+    if (str.empty() || signature.empty() || pub == nullptr || id.empty()) {
+        return -1;
+    }
+    SM9_SIGN_MASTER_KEY mpk;
+    auto ret = sm9_sign_master_public_key_from_pem(&mpk, pub);
+    // assert(ret == 1 && "sm9_sign_master_public_key_from_pem error");
+    if (ret != 1) {
+        return -1;
+    }
+    SM9_SIGN_CTX ctx;
+    ret = sm9_verify_init(&ctx);
+    // assert(ret == 1 && "sm9_verify_init error");
+    if (ret != 1) {
+        return -1;
+    }
+    ret = sm9_verify_update(&ctx, (const uint8_t *)str.c_str(), str.size());
+    // assert(ret == 1 && "sm9_verify_update error");
+    if (ret != 1) {
+        return -1;
+    }
+    ret = sm9_verify_finish(&ctx, (const uint8_t *)signature.c_str(), signature.size(), &mpk, id.c_str(), id.size());
+    // assert(ret == 1 && "sm9_verify_finish error");
+    if (ret != 1) {
+        return -1;
+    }
+    return 0;
+}
+
+string SMX::SM9Encrypt(const string &str, FILE *pub, const string &id) {
+    if (str.empty() || str.size() > SM9_MAX_PLAINTEXT_SIZE || pub == nullptr || id.empty()) {
+        return {};
+    }
+    SM9_ENC_MASTER_KEY mpk;
+    auto ret = sm9_enc_master_public_key_from_pem(&mpk, pub);
+    // assert(ret == 1 && "sm9_enc_master_public_key_from_pem error");
+    if (ret != 1) {
+        return {};
+    }
+    uint8_t cipher[SM9_MAX_CIPHERTEXT_SIZE];
+    size_t cipherlen;
+    ret = sm9_encrypt(&mpk, id.c_str(), id.size(), (const uint8_t *)str.c_str(), str.size(), cipher, &cipherlen);
+    // assert(ret == 1 && "sm9_encrypt error");
+    if (ret != 1) {
+        return {};
+    }
+    return {(char *)cipher, cipherlen};
+}
+
+string SMX::SM9Decrypt(const string &str, const string &userPass, FILE *userPem, const string &id) {
+    if (str.empty() || str.size() > SM9_MAX_CIPHERTEXT_SIZE || userPass.empty() || userPem == nullptr || id.empty()) {
+        return {};
+    }
+    SM9_ENC_KEY key;
+    auto ret = sm9_enc_key_info_decrypt_from_pem(&key, userPass.c_str(), userPem);
+    // assert(ret == 1 && "sm9_enc_key_info_decrypt_from_pem error");
+    if (ret != 1) {
+        return {};
+    }
+    uint8_t plain[SM9_MAX_PLAINTEXT_SIZE];
+    size_t plainlen;
+    ret = sm9_decrypt(&key, id.c_str(), id.size(), (const uint8_t *)str.c_str(), str.size(), plain, &plainlen);
+    // assert(ret == 1 && "sm9_decrypt error");
+    if (ret != 1) {
+        return {};
+    }
+    return {(char *)plain, plainlen};
 }

@@ -40,7 +40,8 @@ foreach (_target
         UnixSocket
         DigraphDot
         SM2
-        SM3+4)
+        SM3+4
+        SM9)
     add_executable(${_target} "test/${_target}.cpp")
     target_link_libraries(${_target} ${PROJECT_BINARY_DIR}/libScorpion.a gmssl)
 endforeach ()

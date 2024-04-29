@@ -12,12 +12,12 @@ void TestSM2() {
     {
         auto pub = fopen("sm2.pub", "w");
         if (pub == nullptr) {
-            cerr << "Failed to open public.pem" << endl;
+            cout << "Failed to open public.pem" << endl;
             return;
         }
         auto pem = fopen("sm2.pem", "w");
         if (pem == nullptr) {
-            cerr << "Failed to open private.pem" << endl;
+            cout << "Failed to open private.pem" << endl;
             return;
         }
         auto ret = SMX::SM2KeyGen(password, pub, pem);
@@ -30,7 +30,7 @@ void TestSM2() {
         const string message = "Hello, World!";
         auto pem = fopen("sm2.pem", "r");
         if (pem == nullptr) {
-            cerr << "Failed to open private.pem" << endl;
+            cout << "Failed to open private.pem" << endl;
             return;
         }
         auto signature = SMX::SM2Sign(message, pem, password, "abcdefg");
@@ -40,7 +40,7 @@ void TestSM2() {
 
         auto pub = fopen("sm2.pub", "r");
         if (pub == nullptr) {
-            cerr << "Failed to open public.pem" << endl;
+            cout << "Failed to open public.pem" << endl;
             return;
         }
         auto ret = SMX::SM2Verify(message, signature, pub, "abcdefg");
@@ -52,7 +52,7 @@ void TestSM2() {
         const string message = "Hello, World!";
         auto pub = fopen("sm2.pub", "r");
         if (pub == nullptr) {
-            cerr << "Failed to open public.pem" << endl;
+            cout << "Failed to open public.pem" << endl;
             return;
         }
         auto encrypted = SMX::SM2Encrypt(message, pub);
@@ -62,7 +62,7 @@ void TestSM2() {
 
         auto pem = fopen("sm2.pem", "r");
         if (pem == nullptr) {
-            cerr << "Failed to open private.pem" << endl;
+            cout << "Failed to open private.pem" << endl;
             return;
         }
         auto decrypted = SMX::SM2Decrypt(encrypted, pem, password);
