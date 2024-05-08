@@ -30,6 +30,7 @@ foreach (_target
         IPV4Filter
         LeakyBucket
         LockFreeQueue
+        NetHelper
         NRWLock
         SpinLockMutex
         ThreadPool
