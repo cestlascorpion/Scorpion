@@ -12,6 +12,7 @@ include_directories(
         src/concurrent
         src/encoding
         src/experiment
+        src/format
         src/network
         src/utilities
         test)
@@ -27,6 +28,7 @@ foreach (_target
         CMDStats
         ConsistentHash
         Encoding
+        Formater
         IPV4Filter
         LeakyBucket
         LockFreeQueue
