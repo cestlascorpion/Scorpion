@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 project(Scorpion)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wconversion -Wsizeof-pointer-memaccess \
+set(CMAKE_CXX_FLAGS "-fPIC -Wall -Wextra -Wconversion -Wsizeof-pointer-memaccess \
                      -Wfloat-equal -Wconversion-null -Woverflow -Wshadow -faligned-new\
                      -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -pthread -g -O0")
 
