@@ -1,5 +1,5 @@
-#include <sgnl/AtomicCondition.h>
-#include <sgnl/SignalHandler.h>
+#include "AtomicCondition.h"
+#include "SignalHandler.h"
 
 #include <cstdlib>
 #include <future>
