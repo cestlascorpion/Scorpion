@@ -34,6 +34,7 @@ foreach (_target
         LockFreeQueue
         NetHelper
         NRWLock
+        SignalWrangler
         SpinLockMutex
         ThreadPool
         TimeWheel
