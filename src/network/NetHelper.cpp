@@ -1,11 +1,12 @@
 #include "NetHelper.h"
 
 #include <arpa/inet.h>
-#include <cstring>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#include <cstring>
 
 using namespace std;
 using namespace Scorpion;

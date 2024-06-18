@@ -5,9 +5,10 @@
 
 #pragma once
 
-#include <memory>
 #include <sys/socket.h>
 #include <sys/time.h>
+
+#include <memory>
 
 namespace Scorpion {
 

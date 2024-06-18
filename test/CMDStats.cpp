@@ -1,10 +1,11 @@
 #include "CMDStats.h"
 
+#include <sys/wait.h>
+#include <unistd.h>
+
 #include <atomic>
 #include <set>
-#include <sys/wait.h>
 #include <thread>
-#include <unistd.h>
 #include <vector>
 
 using namespace std;
@@ -39,7 +40,6 @@ void func(const uint32_t kWorkerNum, const uint32_t kRunSec) {
                 srand(id);
                 timespec t1, t2;
                 while (running.load(memory_order_acquire)) {
-
                     auto random = rand();
                     auto ip = ipTable[random % ipTable.size()];
                     auto port = random % 1024u + 1024;

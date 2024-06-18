@@ -1,11 +1,11 @@
-#include "AtomicCondition.h"
-#include "SignalHandler.h"
-
 #include <cstdlib>
 #include <future>
 #include <iostream>
 #include <thread>
 #include <vector>
+
+#include "AtomicCondition.h"
+#include "SignalHandler.h"
 
 void Worker(const sgnl::AtomicCondition<bool> &exit_condition) {
     auto predicate = [&exit_condition]() { return exit_condition.get(); };

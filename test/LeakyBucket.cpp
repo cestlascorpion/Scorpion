@@ -11,7 +11,7 @@ int main() {
 
     for (int i = 0; i < 100; ++i) {
         auto ok = bucket.grant();
-        if(ok) {
+        if (ok) {
             printf("%d passed\n", i);
         } else {
             printf("%d denied\n", i);

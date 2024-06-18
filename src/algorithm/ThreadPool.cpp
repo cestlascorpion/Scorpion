@@ -1,8 +1,9 @@
 #include "ThreadPool.h"
-#include "BlockingQueue.h"
 
 #include <thread>
 #include <vector>
+
+#include "BlockingQueue.h"
 
 namespace scorpion {
 

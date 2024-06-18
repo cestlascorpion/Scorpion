@@ -7,10 +7,10 @@
 
 #pragma once
 
+#include <string>
+
 #include "FLock.h"
 #include "SingletonTemplate.h"
-
-#include <string>
 
 namespace scorpion {
 

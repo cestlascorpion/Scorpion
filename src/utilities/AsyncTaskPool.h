@@ -26,16 +26,16 @@
 
 #pragma once
 
-#include "AsyncTaskPoolTemplate.h"
-#include "MPMCQueue.h"
-#include "MPSCQueue.h"
-
 #include <atomic>
 #include <cassert>
 #include <chrono>
 #include <exception>
 #include <functional>
 #include <thread>
+
+#include "AsyncTaskPoolTemplate.h"
+#include "MPMCQueue.h"
+#include "MPSCQueue.h"
 
 namespace scorpion {
 

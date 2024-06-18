@@ -40,8 +40,9 @@ public:
         static_assert(sizeof(MPSCQueue<T>) % kCacheLineSize == 0,
                       "MPSCQueue<T> size must be a multiple of cache line size to "
                       "prevent false sharing between adjacent queues");
-        static_assert(sizeof(Slot) % kCacheLineSize == 0, "Slot size must be a multiple of cache line size to prevent "
-                                                          "false sharing between adjacent slots");
+        static_assert(sizeof(Slot) % kCacheLineSize == 0,
+                      "Slot size must be a multiple of cache line size to prevent "
+                      "false sharing between adjacent slots");
         assert(reinterpret_cast<size_t>(slots_) % kCacheLineSize == 0 &&
                "slots_ array must be aligned to cache line size to prevent false "
                "sharing between adjacent slots");

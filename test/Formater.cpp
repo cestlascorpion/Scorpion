@@ -1,5 +1,6 @@
-#include "Chronos.h"
 #include <iostream>
+
+#include "Chronos.h"
 
 using namespace std;
 using namespace Scorpion;

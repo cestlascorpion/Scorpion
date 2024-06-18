@@ -1,8 +1,9 @@
 #include "IPV4Filter.h"
 
+#include <sys/time.h>
+
 #include <fstream>
 #include <iostream>
-#include <sys/time.h>
 
 using namespace std;
 using namespace scorpion;

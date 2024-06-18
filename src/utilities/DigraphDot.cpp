@@ -1,8 +1,9 @@
 #include "DigraphDot.h"
 
-#include <regex>
 #include <string.h>
 #include <unistd.h>
+
+#include <regex>
 #include <vector>
 
 using namespace std;
