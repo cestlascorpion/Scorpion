@@ -7,8 +7,27 @@ using namespace Scorpion;
 #pragma GCC diagnostic ignored "-Wconversion"
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough="
 
-string BaseEncoding::Base16Encode(const string &str) {
+string BaseEncoding::Base16EncodeWithUpperCase(const string &str) {
     static const char base16[] = "0123456789ABCDEF";
+
+    size_t ilength = str.length();
+    size_t olength = ilength * 2;
+
+    string result;
+    result.resize(olength, 0);
+
+    for (size_t i = 0, j = 0; i < ilength;) {
+        uint8_t ch = (uint8_t)str[i++];
+
+        result[j++] = base16[(ch & 0xF0) >> 4];
+        result[j++] = base16[(ch & 0x0F) >> 0];
+    }
+
+    return result;
+}
+
+string BaseEncoding::Base16EncodeWithLowerCase(const string &str) {
+    static const char base16[] = "0123456789abcdef";
 
     size_t ilength = str.length();
     size_t olength = ilength * 2;
@@ -138,41 +157,32 @@ string BaseEncoding::Base64Encode(const string &str) {
 }
 
 string BaseEncoding::Base16Decode(const string &str) {
-    static const unsigned char base16[128] = {
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-        0xFF, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-        0xFF, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-
-    size_t ilength = str.length();
-
-    // assert(((ilength % 2) == 0) && "Invalid Base16 sting!");
-    if ((ilength % 2) != 0)
+    if (str.size() % 2 != 0) {
         return {};
-
-    size_t olength = ilength / 2;
+    }
 
     string result;
-    result.resize(olength, 0);
+    result.resize(str.size() / 2, 0);
 
-    for (size_t i = 0, j = 0; i < ilength;) {
-        uint8_t a = (uint8_t)str[i++];
-        uint8_t b = (uint8_t)str[i++];
+    for (auto i = 0u; i < str.size(); i += 2) {
+        char high = str[i];
+        char low = str[i + 1];
 
-        // Validate ASCII
-        // assert(((a < 0x80) && (b < 0x80)) && "Invalid Base16 content!");
-        if ((a >= 0x80) || (b >= 0x80))
+        int high_val = (high >= '0' && high <= '9')
+                           ? (high - '0')
+                           : (high >= 'A' && high <= 'F') ? (high - 'A' + 10)
+                                                          : (high >= 'a' && high <= 'f') ? (high - 'a' + 10) : -1;
+
+        int low_val =
+            (low >= '0' && low <= '9')
+                ? (low - '0')
+                : (low >= 'A' && low <= 'F') ? (low - 'A' + 10) : (low >= 'a' && low <= 'f') ? (low - 'a' + 10) : -1;
+
+        if (high_val == -1 || low_val == -1) {
             return {};
+        }
 
-        // Convert ASCII to Base16
-        a = base16[a];
-        b = base16[b];
-
-        result[j++] = ((a << 4) | b);
+        result[i / 2] = char((high_val << 4) | low_val);
     }
 
     return result;

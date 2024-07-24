@@ -8,21 +8,45 @@ using namespace Scorpion;
 void TestBase16() {
     {
         string str = "Hello, World!";
-        string encoded = BaseEncoding::Base16Encode(str);
+        string encoded = BaseEncoding::Base16EncodeWithUpperCase(str);
         assert(encoded == "48656C6C6F2C20576F726C6421");
+        string decoded = BaseEncoding::Base16Decode(encoded);
+        assert(decoded == str);
+        decoded = BaseEncoding::Base16Decode(encoded);
+        assert(decoded == str);
+    }
+    {
+        string str = "Hello, World!";
+        string encoded = BaseEncoding::Base16EncodeWithLowerCase(str);
+        assert(encoded == "48656c6c6f2c20576f726c6421");
+        string decoded = BaseEncoding::Base16Decode(encoded);
+        printf("%s\n", decoded.c_str());
+        assert(decoded == str);
+    }
+    {
+        string str = "";
+        string encoded = BaseEncoding::Base16EncodeWithUpperCase(str);
+        assert(encoded == "");
         string decoded = BaseEncoding::Base16Decode(encoded);
         assert(decoded == str);
     }
     {
         string str = "";
-        string encoded = BaseEncoding::Base16Encode(str);
+        string encoded = BaseEncoding::Base16EncodeWithLowerCase(str);
         assert(encoded == "");
         string decoded = BaseEncoding::Base16Decode(encoded);
         assert(decoded == str);
     }
     {
         string str = "A";
-        string encoded = BaseEncoding::Base16Encode(str);
+        string encoded = BaseEncoding::Base16EncodeWithUpperCase(str);
+        assert(encoded == "41");
+        string decoded = BaseEncoding::Base16Decode(encoded);
+        assert(decoded == str);
+    }
+    {
+        string str = "A";
+        string encoded = BaseEncoding::Base16EncodeWithLowerCase(str);
         assert(encoded == "41");
         string decoded = BaseEncoding::Base16Decode(encoded);
         assert(decoded == str);
