@@ -94,7 +94,7 @@ public:
     }
 
     virtual ~Worker() {
-        _running = false;
+        _running.store(false, std::memory_order_release);
         if (_thread.joinable()) {
             _thread.join();
         }
@@ -102,13 +102,13 @@ public:
 
 public:
     virtual bool Start() {
-        if (_running) {
+        if (_running.load(std::memory_order_acquire)) {
             printf("[Warn] worker %u is running\n", _id);
             return false;
         }
-        _running = true;
+        _running.store(true, std::memory_order_release);
         _thread = std::thread([this]() {
-            while (_running) {
+            while (_running.load(std::memory_order_acquire)) {
                 Task task;
                 if (_local->TryPop(task)) {
                     execute(task);
@@ -129,11 +129,11 @@ public:
     }
 
     virtual bool Stop(bool clean) {
-        if (!_running) {
+        if (!_running.load(std::memory_order_acquire)) {
             printf("[Warn] worker %u is not running\n", _id);
             return false;
         }
-        _running = false;
+        _running.store(false, std::memory_order_release);
         if (_thread.joinable()) {
             _thread.join();
         }
@@ -186,7 +186,7 @@ protected:
     queue *const _local;
     queue *const _steal;
 
-    mutable bool _running;
+    mutable std::atomic<bool> _running;
     std::thread _thread;
 };
 
@@ -370,7 +370,7 @@ protected:
 
     queue *_local;
 
-    bool _running;
+    std::atomic<bool> _running;
     std::thread _thread;
 };
 

@@ -42,5 +42,5 @@ foreach (_target
         UnixSocket
         DigraphDot)
     add_executable(${_target} "test/${_target}.cpp")
-    target_link_libraries(${_target} ${PROJECT_BINARY_DIR}/libScorpion.a)
+    target_link_libraries(${_target} PRIVATE Scorpion)
 endforeach ()

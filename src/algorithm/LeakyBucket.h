@@ -12,20 +12,20 @@ namespace scorpion {
 
 class LeakyBucket {
 public:
-    LeakyBucket(int64_t size, int64_t rate)
+    LeakyBucket(int64_t size, double rate)
         : _size(size)
         , _rate(rate)
         , _ts(std::chrono::steady_clock::now())
-        , _water(size / 2) {}
+        , _water((double)size / 2.0) {}
     ~LeakyBucket() = default;
 
 public:
     bool grant() {
         auto now = std::chrono::steady_clock::now();
-        auto out = (now - _ts).count() * _rate;
-        _water = std::max(int64_t(0), _water - out);
+        auto elapsed = std::chrono::duration<double>(now - _ts).count();
+        _water = std::max(0.0, _water - elapsed * _rate);
         _ts = now;
-        if (_water + 1l < _size) {
+        if (_water + 1.0 < static_cast<double>(_size)) {
             ++_water;
             return true; // passed
         } else {
@@ -35,9 +35,9 @@ public:
 
 private:
     int64_t _size;
-    int64_t _rate;
+    double _rate;
     std::chrono::time_point<std::chrono::steady_clock> _ts;
-    int64_t _water;
+    double _water;
 };
 
 } // namespace scorpion

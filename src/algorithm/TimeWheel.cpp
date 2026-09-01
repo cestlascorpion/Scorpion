@@ -86,7 +86,13 @@ void TimeWheelRaw::Tick() {
                 auto cb = (*iter)->_callback; // copy
                 _impl->_pool->Push(std::move(cb));
             } else {
-                (*iter)->_callback();
+                try {
+                    (*iter)->_callback();
+                } catch (const std::exception &e) {
+                    printf("[Warn] time wheel callback throw %s\n", e.what());
+                } catch (...) {
+                    printf("[Warn] time wheel callback throw non-std::exception\n");
+                }
             }
             if ((*iter)->_loop < 0) {
                 auto interval = (*iter)->_interval;

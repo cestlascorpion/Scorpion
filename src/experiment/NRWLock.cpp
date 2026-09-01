@@ -14,6 +14,10 @@ NRWLock::~NRWLock() {
 }
 
 void NRWLock::Init(bool use_double, const char *path) {
+    Release();
+    if (path == nullptr) {
+        return;
+    }
     _lock_name = path;
     _lock_name += ".lock";
     _lock = new FLock(_lock_name.c_str());
@@ -42,6 +46,10 @@ void NRWLock::Release() {
 bool NRWLock::ReadLock(bool no_block) {
     int ret;
 
+    if (_lock == nullptr || (_use_double && _extra == nullptr)) {
+        return false;
+    }
+
     ret = _lock->LockSh(no_block);
     if (ret != 0) {
         return false;
@@ -53,6 +61,7 @@ bool NRWLock::ReadLock(bool no_block) {
 
     ret = _extra->LockSh(no_block);
     if (ret != 0) {
+        _lock->UnLockSh();
         return false;
     }
 
@@ -62,6 +71,10 @@ bool NRWLock::ReadLock(bool no_block) {
 
 bool NRWLock::WriteLock(bool no_block) {
     int ret;
+
+    if (_lock == nullptr || (_use_double && _extra == nullptr)) {
+        return false;
+    }
 
     ret = _lock->LockEx(no_block);
     if (ret != 0) {
@@ -74,6 +87,7 @@ bool NRWLock::WriteLock(bool no_block) {
 
     ret = _extra->LockEx(no_block);
     if (ret != 0) {
+        _lock->UnlockEx();
         return false;
     }
 

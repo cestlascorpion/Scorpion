@@ -31,7 +31,9 @@ static int Poll(int soxFd, short expect, short *result, int timeout) {
 UnixSocket::UnixSocket(const char *path)
     : _sox(-1)
     , _path() {
-    strncpy(_path, path, sizeof(_path));
+    if (path != nullptr) {
+        snprintf(_path, sizeof(_path), "%s", path);
+    }
 }
 
 UnixSocket::UnixSocket(int sox)
@@ -65,6 +67,8 @@ int UnixSocket::Create() {
 
     if (bind(_sox, (sockaddr *)&addr, (socklen_t)sizeof(addr)) == -1) {
         printf("bind error %d %s\n", errno, strerror(errno));
+        close(_sox);
+        _sox = -1;
         return -1;
     }
     return 0;

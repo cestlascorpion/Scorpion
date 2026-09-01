@@ -87,6 +87,7 @@ void TestBase64() {
         string decoded = BaseEncoding::Base64Decode(encoded);
         assert(decoded == str);
     }
+    assert(BaseEncoding::Base64Decode("!GVsbG8sIFdvcmxkIQ==").empty());
     {
         string str = "";
         string encoded = BaseEncoding::Base64Encode(str);

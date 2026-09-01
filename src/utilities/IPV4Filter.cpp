@@ -19,37 +19,19 @@ IPCidr::IPCidr(uint32_t head, uint32_t tail) {
 }
 
 bool IPCidr::operator==(const IPCidr &cidr) const {
-    if ((cidr._head >= _head) && (cidr._tail <= _tail)) {
-        return true;
-    }
-    if ((_head >= cidr._head) && (_tail <= cidr._tail)) {
-        return true;
-    }
-    return false;
+    return _head == cidr._head && _tail == cidr._tail;
 }
 
 bool IPCidr::operator!=(const IPCidr &cidr) const {
-    if ((cidr._head >= _head) && (cidr._tail <= _tail)) {
-        return false;
-    }
-    if ((_head >= cidr._head) && (_tail <= cidr._tail)) {
-        return false;
-    }
-    return true;
+    return !(*this == cidr);
 }
 
 bool IPCidr::operator>(const IPCidr &cidr) const {
-    if (this->operator==(cidr)) {
-        return false;
-    }
-    return _tail > cidr._tail;
+    return cidr < *this;
 }
 
 bool IPCidr::operator<(const IPCidr &cidr) const {
-    if (this->operator==(cidr)) {
-        return false;
-    }
-    return _head < cidr._head;
+    return _head < cidr._head || (_head == cidr._head && _tail < cidr._tail);
 }
 
 } // namespace scorpion
@@ -83,6 +65,9 @@ bool IPFilter::LoadConfig(const string &file, RULE_TYPE type) {
 }
 
 bool IPFilter::Add(const char *rule, RULE_TYPE type) {
+    if (rule == nullptr) {
+        return false;
+    }
     return Add(string(rule), type);
 }
 
@@ -113,25 +98,15 @@ bool IPFilter::Add(const string &rule, RULE_TYPE type) {
     }
 
     IPCidr new_cidr(from, to);
-    auto it = plist->find(new_cidr);
-    if (it == plist->end()) {
-        printf("not found. add rule: <%08X - %08X>\n", from, to);
-        return plist->insert(new_cidr).second;
-    }
-
-    while (it != plist->end()) {
-        if (from < it->_head || to > it->_tail) {
-            printf("%s: conflict with another rule which has smaller range, erase it!\n", __func__);
-            printf("the rule: <%08X - %08X>  is conflict with <%08X - %08X>\n", from, to, it->_head, it->_tail);
-            plist->erase(it);
-            it = plist->find(new_cidr);
+    for (auto it = plist->begin(); it != plist->end();) {
+        if (to < it->_head || from > it->_tail) {
+            ++it;
+        } else if (from <= it->_head && to >= it->_tail) {
+            it = plist->erase(it);
         } else {
-            printf("%s: conflict with another rule which has bigger range!\n", __func__);
-            printf("the rule: <%08X - %08X>  is conflict with <%08X - %08X>\n", from, to, it->_head, it->_tail);
             return false;
         }
     }
-
     return plist->insert(new_cidr).second;
 }
 
@@ -202,14 +177,19 @@ bool IPFilter::IsBlocked(uint32_t addr) const {
 
     IPCidr cidr(ad, ad);
 
-    if (_black.find(cidr) == _black.end()) {
+    const auto contains = [&cidr](const set<IPCidr> &rules) {
+        for (const auto &rule : rules) {
+            if (rule._head <= cidr._head && cidr._head <= rule._tail) return true;
+        }
         return false;
-    } else {
-        return _white.find(cidr) == _white.end();
-    }
+    };
+    return contains(_black) && !contains(_white);
 }
 
 bool IPFilter::IsBlocked(const char *addr) const {
+    if (addr == nullptr) {
+        return false;
+    }
     sockaddr_in ad;
     if (inet_pton(AF_INET, addr, &ad.sin_addr) != 1) {
         printf("%s: inet_pton() failed!\n", __func__);
@@ -249,16 +229,16 @@ bool IPFilter::parseRule(const string &rule, uint32_t &from, uint32_t &to) {
             return false;
         }
 
-        from = ntohl(addr.sin_addr.s_addr);
-        auto length = (uint32_t)strtoul(rule.substr(idx + 1, rule.size() - idx).c_str(), nullptr, 10);
+        auto value = rule.substr(idx + 1);
+        char *end = nullptr;
+        auto length = (uint32_t)strtoul(value.c_str(), &end, 10);
+        if (end == value.c_str() || *end != '\0') return false;
         if (length > 32) {
             return false;
         }
-        if (length == 32) {
-            to = from;
-        } else {
-            to = from | (0xFFFFFFFF >> length);
-        }
+        uint32_t mask = length == 0 ? 0 : (0xFFFFFFFFu << (32 - length));
+        from = ntohl(addr.sin_addr.s_addr) & mask;
+        to = from | ~mask;
     }
 
     printf("%s: head: %08X tail: %08X\n", __func__, from, to);

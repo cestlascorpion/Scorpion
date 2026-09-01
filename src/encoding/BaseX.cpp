@@ -304,9 +304,21 @@ string BaseEncoding::Base64Decode(const string &str) {
 
     size_t ilength = str.length();
 
+    if (ilength == 0)
+        return {};
     // assert((ilength % 4 == 0) && "Invalid Base64 string!");
     if (ilength % 4 != 0)
         return {};
+
+    const auto valid = [](char ch) {
+        return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '+' ||
+               ch == '/' || ch == '=';
+    };
+    for (size_t i = 0; i < ilength; ++i) {
+        if (!valid(str[i]) || (str[i] == '=' && i < ilength - 2) ||
+            (str[i] == '=' && i + 1 < ilength && str[i + 1] != '='))
+            return {};
+    }
 
     size_t olength = ilength / 4 * 3;
 
