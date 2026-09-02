@@ -4,7 +4,7 @@
 
 using namespace std;
 using namespace chrono;
-using namespace scorpion;
+using namespace Scorpion;
 
 int main() {
     LeakyBucket bucket(10, 2);

@@ -13,7 +13,7 @@
 #include <set>
 #include <string>
 
-namespace scorpion {
+namespace Scorpion {
 
 class IPCidr {
 public:
@@ -64,4 +64,4 @@ private:
     std::set<IPCidr> _white;
 };
 
-} // namespace scorpion
+} // namespace Scorpion

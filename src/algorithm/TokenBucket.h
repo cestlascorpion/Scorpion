@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <chrono>
 
-namespace scorpion {
+namespace Scorpion {
 
 class TokenBucket {
 public:
@@ -40,4 +40,4 @@ private:
     double _token;
 };
 
-} // namespace scorpion
+} // namespace Scorpion

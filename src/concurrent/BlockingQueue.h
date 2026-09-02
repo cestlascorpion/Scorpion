@@ -4,13 +4,13 @@
 #include <condition_variable>
 #include <mutex>
 
-namespace scorpion {
+namespace Scorpion {
 
 template <typename T>
 class BlockingQueue {
 public:
     explicit BlockingQueue(size_t capacity)
-        : _capacity(capacity)
+        : _capacity(capacity == 0 ? 1 : capacity)
         , _head(new Node)
         , _tail(_head)
         , _size(0) {}
@@ -46,9 +46,9 @@ public:
         Node *new_tail = new Node;
         _tail->next = new_tail;
         _tail = new_tail;
+        _size.fetch_add(1, std::memory_order_relaxed);
         lock.unlock();
 
-        _size.fetch_add(1, std::memory_order_relaxed);
         _not_empty.notify_one();
     }
 
@@ -58,9 +58,9 @@ public:
         Node *old_head = _head;
         v = std::move(old_head->value);
         _head = old_head->next;
+        _size.fetch_sub(1, std::memory_order_relaxed);
         lock.unlock();
 
-        _size.fetch_sub(1);
         _not_full.notify_one();
         delete old_head;
     }
@@ -74,9 +74,9 @@ public:
         Node *old_head = _head;
         v = std::move(_head->value);
         _head = old_head->next;
+        _size.fetch_sub(1, std::memory_order_relaxed);
         lock.unlock();
 
-        _size.fetch_sub(1);
         _not_full.notify_one();
         delete old_head;
         return true;
@@ -122,4 +122,4 @@ private:
     std::condition_variable _not_full;
 };
 
-} // namespace scorpion
+} // namespace Scorpion

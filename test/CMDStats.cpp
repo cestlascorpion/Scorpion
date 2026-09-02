@@ -40,14 +40,14 @@ void func(const uint32_t kWorkerNum, const uint32_t kRunSec) {
                 srand(id);
                 timespec t1, t2;
                 while (running.load(memory_order_acquire)) {
-                    auto random = rand();
-                    auto ip = ipTable[random % ipTable.size()];
-                    auto port = random % 1024u + 1024;
+                    auto random = static_cast<unsigned>(rand());
+                    auto ip = ipTable[static_cast<size_t>(random % ipTable.size())];
+                    auto port = random % 1024u + 1024u;
                     auto cmd = random % 40u;
                     auto c = random % 2100;
 
                     clock_gettime(CLOCK_MONOTONIC, &t1);
-                    CMDStat::CMDStatReport(Ip2Uint32(ip), uint16_t(port), cmd, c);
+                    CMDStat::CMDStatReport(Ip2Uint32(ip), static_cast<uint16_t>(port), cmd, c);
                     clock_gettime(CLOCK_MONOTONIC, &t2);
 
                     cost[id][0] += uint64_t((t2.tv_sec - t1.tv_sec) * 1000000000 + (t2.tv_nsec - t1.tv_nsec));
@@ -83,8 +83,9 @@ void func(const uint32_t kWorkerNum, const uint32_t kRunSec) {
         sum += cost[i][0];
         num += cost[i][1];
     }
-    printf("[%d] *report: %lu ns\n", getpid(), num > 0 ? sum / num : 0);
-    printf("[%d] collect: %lu ns\n", getpid(), cost[kWorkerNum][1] > 0 ? cost[kWorkerNum][0] / cost[kWorkerNum][1] : 0);
+    printf("[%d] *report: %llu ns\n", getpid(), static_cast<unsigned long long>(num > 0 ? sum / num : 0));
+    printf("[%d] collect: %llu ns\n", getpid(),
+           static_cast<unsigned long long>(cost[kWorkerNum][1] > 0 ? cost[kWorkerNum][0] / cost[kWorkerNum][1] : 0));
 }
 
 int main(int argc, char **argv) {

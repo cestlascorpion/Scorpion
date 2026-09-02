@@ -3,7 +3,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-namespace scorpion {
+namespace Scorpion {
 
 FLock::FLock(const char *file)
     : _fd(-1) {
@@ -84,4 +84,4 @@ void FLock::makeFlock(struct flock *lock, short type) {
     lock->l_len = 0;
 }
 
-} // namespace scorpion
+} // namespace Scorpion

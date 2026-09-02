@@ -37,7 +37,7 @@
 #include "MPMCQueue.h"
 #include "MPSCQueue.h"
 
-namespace scorpion {
+namespace Scorpion {
 
 class Task {
 public:
@@ -73,9 +73,9 @@ public:
     std::function<int()> _func;
 };
 
-} // namespace scorpion
+} // namespace Scorpion
 
-namespace scorpion {
+namespace Scorpion {
 
 template <>
 class Worker<Task, MPMCQueue<Task>> {
@@ -174,7 +174,7 @@ protected:
                 printf("[Warn] task throw non-std::exception\n");
             }
         } else {
-            printf("[Warn] task timeout %u wait %ld ms\n", task._id, wait);
+            printf("[Warn] task timeout %u wait %lld ms\n", task._id, static_cast<long long>(wait));
         }
     };
 
@@ -201,6 +201,9 @@ public:
 
 public:
     virtual bool Init(unsigned pool_size, unsigned queue_len, unsigned sleep, unsigned timeout) {
+        if (pool_size == 0) {
+            return false;
+        }
         _queues.reserve(pool_size);
         for (unsigned idx = 0; idx < pool_size; ++idx) {
             std::unique_ptr<queue> q(new MPMCQueue<Task>(queue_len));
@@ -236,6 +239,9 @@ public:
     }
 
     virtual bool Submit(unsigned uid, Task task) {
+        if (_queues.empty() || _workers.empty()) {
+            return false;
+        }
         unsigned try_count = 0;
         unsigned route_id = route(uid);
         while (try_count < _queues.size()) {
@@ -260,9 +266,9 @@ protected:
     std::vector<std::unique_ptr<Worker<Task, queue>>> _workers;
 };
 
-} // namespace scorpion
+} // namespace Scorpion
 
-namespace scorpion {
+namespace Scorpion {
 
 template <>
 class Worker<Task, MPSCQueue<Task>> {
@@ -359,7 +365,7 @@ protected:
                 printf("[Warn] task throw non-std::exception\n");
             }
         } else {
-            printf("[Warn] task timeout %u wait %ld ms\n", task._id, wait);
+            printf("[Warn] task timeout %u wait %lld ms\n", task._id, static_cast<long long>(wait));
         }
     };
 
@@ -385,6 +391,9 @@ public:
 
 public:
     virtual bool Init(unsigned pool_size, unsigned queue_len, unsigned sleep, unsigned timeout) {
+        if (pool_size == 0) {
+            return false;
+        }
         _queues.reserve(pool_size);
         for (unsigned idx = 0; idx < pool_size; ++idx) {
             std::unique_ptr<queue> q(new MPSCQueue<Task>(queue_len));
@@ -419,6 +428,9 @@ public:
     }
 
     virtual bool Submit(unsigned uid, Task task) {
+        if (_queues.empty() || _workers.empty()) {
+            return false;
+        }
         return _workers[route(uid)]->Add(std::move(task));
     }
 
@@ -432,4 +444,4 @@ protected:
     std::vector<std::unique_ptr<Worker<Task, queue>>> _workers;
 };
 
-} // namespace scorpion
+} // namespace Scorpion

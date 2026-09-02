@@ -3,7 +3,7 @@
 #include <functional>
 #include <memory>
 
-namespace scorpion {
+namespace Scorpion {
 
 class ThreadPool {
 public:
@@ -18,4 +18,4 @@ private:
     std::unique_ptr<Impl> _impl;
 };
 
-} // namespace scorpion
+} // namespace Scorpion

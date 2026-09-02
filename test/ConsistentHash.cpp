@@ -4,7 +4,7 @@
 #include <unordered_map>
 
 using namespace std;
-using namespace scorpion;
+using namespace Scorpion;
 
 void testInteger() {
     unordered_map<size_t, uint32_t> hosts{{101, 0}, {102, 0}, {103, 0}, {104, 0},  {105, 0},  {106, 0},

@@ -27,7 +27,7 @@
 #include <cassert>
 #include <stdexcept>
 
-namespace scorpion {
+namespace Scorpion {
 
 template <typename T>
 class SPSCQueue {
@@ -174,4 +174,4 @@ private:
     char padding_[kCacheLineSize - sizeof(tail_)];
 };
 
-} // namespace scorpion
+} // namespace Scorpion

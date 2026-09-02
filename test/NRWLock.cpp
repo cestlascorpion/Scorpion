@@ -7,7 +7,7 @@
 #define WRITER 20
 
 using namespace std;
-using namespace scorpion;
+using namespace Scorpion;
 
 void ReadFunc();
 void WriteFunc();

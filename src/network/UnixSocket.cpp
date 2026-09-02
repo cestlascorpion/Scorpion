@@ -28,6 +28,15 @@ static int Poll(int soxFd, short expect, short *result, int timeout) {
     return ret;
 }
 
+static void SetNoSigPipe(int sox) {
+#ifdef SO_NOSIGPIPE
+    int enabled = 1;
+    setsockopt(sox, SOL_SOCKET, SO_NOSIGPIPE, &enabled, sizeof(enabled));
+#else
+    (void)sox;
+#endif
+}
+
 UnixSocket::UnixSocket(const char *path)
     : _sox(-1)
     , _path() {
@@ -38,7 +47,11 @@ UnixSocket::UnixSocket(const char *path)
 
 UnixSocket::UnixSocket(int sox)
     : _sox(sox)
-    , _path() {}
+    , _path() {
+    if (_sox != -1) {
+        SetNoSigPipe(_sox);
+    }
+}
 
 UnixSocket::~UnixSocket() {
     if (_sox != -1) {
@@ -58,6 +71,7 @@ int UnixSocket::Create() {
         printf("socket err %d %s\n", errno, strerror(errno));
         return -1;
     }
+    SetNoSigPipe(_sox);
 
     sockaddr_un addr{};
     memset(&addr, 0, sizeof(addr));
@@ -102,7 +116,11 @@ ssize_t UnixSocket::sendPacket(int sox, const void *buffer, size_t length) {
     const char *cursor = (const char *)buffer;
     auto left = (ssize_t)length;
     while (left > 0) {
-        auto byte = send(sox, cursor, (size_t)left, 0);
+        int flags = 0;
+#ifdef MSG_NOSIGNAL
+        flags |= MSG_NOSIGNAL;
+#endif
+        auto byte = send(sox, cursor, (size_t)left, flags);
         if (byte > 0) {
             left -= byte;
             cursor += byte;

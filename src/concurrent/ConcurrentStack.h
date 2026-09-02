@@ -9,7 +9,7 @@
 #include <mutex>
 #include <stack>
 
-namespace scorpion {
+namespace Scorpion {
 
 template <typename T>
 class ConcurrentStack {
@@ -66,4 +66,4 @@ private:
     mutable std::mutex _mtx;
 };
 
-} // namespace scorpion
+} // namespace Scorpion

@@ -29,7 +29,7 @@
 #include <memory>
 #include <stdexcept>
 
-namespace scorpion {
+namespace Scorpion {
 
 template <typename T>
 class MPMCQueue {
@@ -38,14 +38,14 @@ public:
         : capacity_(capacity < kDefaultCapacity ? kDefaultCapacity : capacity)
         , head_(0)
         , tail_(0) {
-        size_t space = capacity * sizeof(Slot) + kCacheLineSize - 1;
+        size_t space = capacity_ * sizeof(Slot) + kCacheLineSize - 1;
         buffer_ = malloc(space);
         if (buffer_ == nullptr) {
             throw std::bad_alloc();
         }
 
         void *buffer = buffer_;
-        slots_ = reinterpret_cast<Slot *>(std::align(kCacheLineSize, capacity * sizeof(Slot), buffer, space));
+        slots_ = reinterpret_cast<Slot *>(std::align(kCacheLineSize, capacity_ * sizeof(Slot), buffer, space));
 
         if (slots_ == nullptr) {
             free(buffer_);
@@ -231,4 +231,4 @@ private:
     alignas(kCacheLineSize) std::atomic<size_t> tail_;
 };
 
-} // namespace scorpion
+} // namespace Scorpion

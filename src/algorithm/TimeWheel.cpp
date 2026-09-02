@@ -6,7 +6,7 @@
 
 #include "ThreadPool.h"
 
-namespace scorpion {
+namespace Scorpion {
 
 using namespace std;
 using cbType = function<int()>;
@@ -53,9 +53,9 @@ struct TimeWheelRaw::Impl {
     }
 };
 
-} // namespace scorpion
+} // namespace Scorpion
 
-namespace scorpion {
+namespace Scorpion {
 
 TimeWheelRaw::TimeWheelRaw(bool async)
     : _impl(new Impl(async, kTimeWheelSpan, kTimeWheelSize)) {}
@@ -71,6 +71,7 @@ void TimeWheelRaw::Add(cbType cb, unsigned interval, int loop) {
 }
 
 void TimeWheelRaw::Tick() {
+    _impl->_cursor = (_impl->_cursor + 1u) % _impl->_size;
     auto &list = _impl->_slots[_impl->_cursor];
     for (auto iter = list.begin(); iter != list.end(); /*nothing*/) {
         if ((*iter)->_rotation == 0) {
@@ -110,7 +111,6 @@ void TimeWheelRaw::Tick() {
             ++iter;
         }
     }
-    _impl->_cursor = (_impl->_cursor + 1u) % _impl->_size;
 }
 
 void TimeWheelRaw::Dump() const {
@@ -122,4 +122,4 @@ void TimeWheelRaw::Dump() const {
     }
 }
 
-} // namespace scorpion
+} // namespace Scorpion

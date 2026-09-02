@@ -5,7 +5,6 @@ using namespace Scorpion;
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
-#pragma GCC diagnostic ignored "-Wimplicit-fallthrough="
 
 string BaseEncoding::Base16EncodeWithUpperCase(const string &str) {
     static const char base16[] = "0123456789ABCDEF";
@@ -63,17 +62,21 @@ string BaseEncoding::Base32Encode(const string &str) {
         case 5:
             n8 = (((uint8_t)str[i + 4] & 0x1F) >> 0);
             n7 = (((uint8_t)str[i + 4] & 0xE0) >> 5);
+            [[fallthrough]];
         case 4:
             n7 |= (((uint8_t)str[i + 3] & 0x03) << 3);
             n6 = (((uint8_t)str[i + 3] & 0x7C) >> 2);
             n5 = (((uint8_t)str[i + 3] & 0x80) >> 7);
+            [[fallthrough]];
         case 3:
             n5 |= (((uint8_t)str[i + 2] & 0x0F) << 1);
             n4 = (((uint8_t)str[i + 2] & 0xF0) >> 4);
+            [[fallthrough]];
         case 2:
             n4 |= (((uint8_t)str[i + 1] & 0x01) << 4);
             n3 = (((uint8_t)str[i + 1] & 0x3E) >> 1);
             n2 = (((uint8_t)str[i + 1] & 0xC0) >> 6);
+            [[fallthrough]];
         case 1:
             n2 |= (((uint8_t)str[i + 0] & 0x07) << 2);
             n1 = (((uint8_t)str[i + 0] & 0xF8) >> 3);
@@ -100,12 +103,16 @@ string BaseEncoding::Base32Encode(const string &str) {
         switch (block) {
         case 1:
             n3 = n4 = 32;
+            [[fallthrough]];
         case 2:
             n5 = 32;
+            [[fallthrough]];
         case 3:
             n6 = n7 = 32;
+            [[fallthrough]];
         case 4:
             n8 = 32;
+            [[fallthrough]];
         case 5:
             break;
         default:

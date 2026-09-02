@@ -2,7 +2,7 @@
 
 #include <unistd.h>
 
-namespace scorpion {
+namespace Scorpion {
 
 NRWLock::NRWLock()
     : _use_double(true)
@@ -34,12 +34,10 @@ void NRWLock::Release() {
     if (_lock != nullptr) {
         delete _lock;
         _lock = nullptr;
-        unlink(_lock_name.c_str());
     }
     if (_extra != nullptr) {
         delete _extra;
         _extra = nullptr;
-        unlink(_extra_name.c_str());
     }
 }
 
@@ -98,6 +96,10 @@ bool NRWLock::WriteLock(bool no_block) {
 bool NRWLock::ReadUnLock() {
     int ret;
 
+    if (_lock == nullptr || (_use_double && _extra == nullptr)) {
+        return false;
+    }
+
     if (!_use_double) {
         ret = _lock->UnLockSh();
     } else {
@@ -110,8 +112,12 @@ bool NRWLock::ReadUnLock() {
 bool NRWLock::WriteUnLock() {
     int ret;
 
+    if (_lock == nullptr) {
+        return false;
+    }
+
     ret = _lock->UnlockEx();
     return ret == 0;
 }
 
-} // namespace scorpion
+} // namespace Scorpion

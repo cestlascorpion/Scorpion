@@ -10,7 +10,7 @@
 #include <stdexcept>
 #include <vector>
 
-namespace scorpion {
+namespace Scorpion {
 
 template <typename T>
 class MPSCQueue {
@@ -19,14 +19,14 @@ public:
         : capacity_(capacity < kDefaultCapacity ? kDefaultCapacity : capacity)
         , head_(0)
         , tail_(0) {
-        size_t space = capacity * sizeof(Slot) + kCacheLineSize - 1;
+        size_t space = capacity_ * sizeof(Slot) + kCacheLineSize - 1;
         buffer_ = malloc(space);
         if (buffer_ == nullptr) {
             throw std::bad_alloc();
         }
 
         void *buffer = buffer_;
-        slots_ = reinterpret_cast<Slot *>(std::align(kCacheLineSize, capacity * sizeof(Slot), buffer, space));
+        slots_ = reinterpret_cast<Slot *>(std::align(kCacheLineSize, capacity_ * sizeof(Slot), buffer, space));
 
         if (slots_ == nullptr) {
             free(buffer_);
@@ -146,11 +146,10 @@ public:
         if (head_.load(std::memory_order_acquire) == tail) {
             return nullptr;
         }
-        const auto slot = slots_[tail];
-        if (!slot.ready.load(std::memory_order_acquire)) {
+        if (!slots_[tail].ready.load(std::memory_order_acquire)) {
             return nullptr;
         }
-        return &slots_[tail];
+        return reinterpret_cast<T *>(&slots_[tail].storage);
     }
 
     void Pop() noexcept {
@@ -244,4 +243,4 @@ private:
     alignas(kCacheLineSize) std::atomic<size_t> tail_;
 };
 
-} // namespace scorpion
+} // namespace Scorpion

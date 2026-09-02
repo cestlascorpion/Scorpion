@@ -10,7 +10,7 @@
 #include <mutex>
 #include <queue>
 
-namespace scorpion {
+namespace Scorpion {
 
 template <typename T>
 class ConcurrentQueue {
@@ -83,4 +83,4 @@ private:
     std::condition_variable _cond;
 };
 
-} // namespace scorpion
+} // namespace Scorpion

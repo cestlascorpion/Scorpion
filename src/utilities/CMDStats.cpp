@@ -24,8 +24,10 @@ string Ip2Str(uint32_t ip) {
 }
 
 uint32_t Ip2Uint32(const string &ip) {
-    sockaddr_in addr;
-    inet_pton(AF_INET, ip.c_str(), &addr.sin_addr.s_addr);
+    sockaddr_in addr{};
+    if (inet_pton(AF_INET, ip.c_str(), &addr.sin_addr.s_addr) != 1) {
+        return 0;
+    }
     return ntohl(addr.sin_addr.s_addr);
 }
 
@@ -127,20 +129,18 @@ void CollectCMDStats(vector<CMDStats> &stats) {
     lock_guard<mutex> lk(GetGlobalStats().mtx);
 
     for (auto &pair : GetGlobalStats().tbl) {
-        if (pair.second->total.load(memory_order_relaxed) > 0u) {
-            stats.emplace_back(get<0u>(pair.first),                                                    // ip
-                               get<1u>(pair.first),                                                    // port
-                               get<2u>(pair.first),                                                    // cmd
-                               pair.second->table[LEVEL_000_005].exchange(0u, memory_order_relaxed),   // _0
-                               pair.second->table[LEVEL_005_010].exchange(0u, memory_order_relaxed),   // _1
-                               pair.second->table[LEVEL_010_020].exchange(0u, memory_order_relaxed),   // _2
-                               pair.second->table[LEVEL_020_050].exchange(0u, memory_order_relaxed),   // _3
-                               pair.second->table[LEVEL_050_100].exchange(0u, memory_order_relaxed),   // _4
-                               pair.second->table[LEVEL_100_200].exchange(0u, memory_order_relaxed),   // _5
-                               pair.second->table[LEVEL_200_500].exchange(0u, memory_order_relaxed),   // _6
-                               pair.second->table[LEVEL_500_1KMS].exchange(0u, memory_order_relaxed),  // _7
-                               pair.second->table[LEVEL_1KMS_2KMS].exchange(0u, memory_order_relaxed), // _8
-                               pair.second->table[LEVEL_OTHERS].exchange(0u, memory_order_relaxed));   // _9
+        array<uint32_t, TABLE_SIZE> counter{};
+        bool has_data = false;
+        for (auto i = 0u; i < TABLE_SIZE; ++i) {
+            counter[i] = pair.second->table[i].exchange(0u, memory_order_relaxed);
+            has_data = has_data || counter[i] != 0u;
+        }
+        if (has_data) {
+            stats.emplace_back(get<0u>(pair.first), get<1u>(pair.first), get<2u>(pair.first),
+                               counter[LEVEL_000_005], counter[LEVEL_005_010], counter[LEVEL_010_020],
+                               counter[LEVEL_020_050], counter[LEVEL_050_100], counter[LEVEL_100_200],
+                               counter[LEVEL_200_500], counter[LEVEL_500_1KMS], counter[LEVEL_1KMS_2KMS],
+                               counter[LEVEL_OTHERS]);
         }
     }
 }

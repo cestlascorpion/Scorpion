@@ -7,7 +7,7 @@
 #include <vector>
 
 using namespace std;
-using namespace scorpion;
+using namespace Scorpion;
 
 const int kMaxThreads = 16;
 static_assert((kMaxThreads & (kMaxThreads - 1)) == 0, "Make sure kMaxThreads == 2^n");

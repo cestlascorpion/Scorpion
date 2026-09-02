@@ -6,7 +6,7 @@
 
 using namespace std;
 
-namespace scorpion {
+namespace Scorpion {
 
 IPCidr::IPCidr(uint32_t addr) {
     _head = addr;
@@ -34,11 +34,14 @@ bool IPCidr::operator<(const IPCidr &cidr) const {
     return _head < cidr._head || (_head == cidr._head && _tail < cidr._tail);
 }
 
-} // namespace scorpion
+} // namespace Scorpion
 
-namespace scorpion {
+namespace Scorpion {
 
 bool IPFilter::LoadConfig(const char *file, RULE_TYPE type) {
+    if (file == nullptr) {
+        return false;
+    }
     return LoadConfig(string(file), type);
 }
 
@@ -111,6 +114,9 @@ bool IPFilter::Add(const string &rule, RULE_TYPE type) {
 }
 
 bool IPFilter::Erase(const char *rule, RULE_TYPE type) {
+    if (rule == nullptr) {
+        return false;
+    }
     return Erase(string(rule), type);
 }
 
@@ -271,4 +277,4 @@ void IPFilter::Dump(bool print) const {
     }
 }
 
-} // namespace scorpion
+} // namespace Scorpion

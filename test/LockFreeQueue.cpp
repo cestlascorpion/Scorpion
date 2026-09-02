@@ -9,7 +9,7 @@
 
 using namespace std;
 using namespace chrono;
-using namespace scorpion;
+using namespace Scorpion;
 
 constexpr const size_t kQueueSize = 1024;
 constexpr const size_t kProducerNum = 10;

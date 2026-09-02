@@ -13,7 +13,7 @@
 #include <mutex>
 #include <thread>
 
-namespace scorpion {
+namespace Scorpion {
 
 class TimeWheelRaw {
 public:
@@ -69,4 +69,4 @@ private:
     std::thread _thread;
 };
 
-} // namespace scorpion
+} // namespace Scorpion

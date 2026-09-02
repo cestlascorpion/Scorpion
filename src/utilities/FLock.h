@@ -7,7 +7,7 @@
 
 #include <fcntl.h>
 
-namespace scorpion {
+namespace Scorpion {
 
 class FLock {
 public:
@@ -30,4 +30,4 @@ private:
     int _fd;
 };
 
-} // namespace scorpion
+} // namespace Scorpion

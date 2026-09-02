@@ -1,9 +1,11 @@
 #include "DigraphDot.h"
 
 #include <string.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include <regex>
+#include <cerrno>
 #include <vector>
 
 using namespace std;
@@ -71,9 +73,9 @@ int DigraphDot::ReadFile(const string &file, const HandleNode &handleNode) {
             auto node = make_unique<DotNode>(slice[i]);
             handleNode(node.get()); // set label and attr
             _relation[svr->_label].insert(node->_label);
-            _nodes.emplace(node->_label, move(node));
+            _nodes.emplace(node->_label, std::move(node));
         }
-        _nodes.emplace(svr->_label, move(svr));
+        _nodes.emplace(svr->_label, std::move(svr));
     }
 
     io.close();
@@ -99,14 +101,27 @@ int DigraphDot::WriteSVC(const string &svc, const HandleLine &handleLine) {
         unlink(out.c_str());
     }
 
-    char cmd[128]{0};
     for (const auto &layout : _layouts) {
-        memset(cmd, 0, sizeof(cmd));
-        snprintf(cmd, sizeof(cmd), "dot -T%s -K%s -o %s.%s.%s %s", _format.c_str(), layout.c_str(), svc.c_str(),
-                 layout.c_str(), _format.c_str(), out.c_str());
-        int ret = system(cmd);
-        if (ret != 0) {
-            printf("cmd %s run fail\n", cmd);
+        auto output = svc + "." + layout + "." + _format;
+        auto type = "-T" + _format;
+        auto engine = "-K" + layout;
+        pid_t pid = fork();
+        if (pid == -1) {
+            printf("fork dot fail\n");
+            return -1;
+        }
+        if (pid == 0) {
+            execlp("dot", "dot", type.c_str(), engine.c_str(), "-o", output.c_str(), out.c_str(), (char *)nullptr);
+            _exit(127);
+        }
+        int status = 0;
+        while (waitpid(pid, &status, 0) == -1) {
+            if (errno != EINTR) {
+                return -1;
+            }
+        }
+        if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+            printf("dot run fail\n");
             return -1;
         }
     }

@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <chrono>
 
-namespace scorpion {
+namespace Scorpion {
 
 class LeakyBucket {
 public:
@@ -40,4 +40,4 @@ private:
     double _water;
 };
 
-} // namespace scorpion
+} // namespace Scorpion

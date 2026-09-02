@@ -12,7 +12,7 @@
 #include "FLock.h"
 #include "SingletonTemplate.h"
 
-namespace scorpion {
+namespace Scorpion {
 
 class NRWLock {
 public:
@@ -45,4 +45,4 @@ private:
 
 using NRWLockSingleton = Singleton<NRWLock>;
 
-} // namespace scorpion
+} // namespace Scorpion

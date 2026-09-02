@@ -7,12 +7,11 @@
 
 #include <atomic>
 
-namespace scorpion {
+namespace Scorpion {
 
 class SpinLockMutex {
 public:
-    SpinLockMutex()
-        : flag(ATOMIC_FLAG_INIT) {}
+    SpinLockMutex() = default;
     ~SpinLockMutex() = default;
 
 public:
@@ -25,7 +24,7 @@ public:
     }
 
 private:
-    std::atomic_flag flag;
+    std::atomic_flag flag = ATOMIC_FLAG_INIT;
 };
 
-} // namespace scorpion
+} // namespace Scorpion

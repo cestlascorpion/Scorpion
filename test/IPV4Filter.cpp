@@ -6,7 +6,7 @@
 #include <iostream>
 
 using namespace std;
-using namespace scorpion;
+using namespace Scorpion;
 
 int main() {
     IPFilter filter;

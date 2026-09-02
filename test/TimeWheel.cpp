@@ -6,7 +6,7 @@
 
 using namespace std;
 using namespace chrono;
-using namespace scorpion;
+using namespace Scorpion;
 
 void testRaw() {
     TimeWheelRaw twr;

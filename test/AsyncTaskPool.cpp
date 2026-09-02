@@ -7,7 +7,7 @@
 
 using namespace std;
 using namespace chrono;
-using namespace scorpion;
+using namespace Scorpion;
 
 constexpr const unsigned kPoolSize = 10;
 constexpr const unsigned kQueueLength = 1024;

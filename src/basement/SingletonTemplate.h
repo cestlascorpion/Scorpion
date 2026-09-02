@@ -5,7 +5,7 @@
 
 #pragma once
 
-namespace scorpion {
+namespace Scorpion {
 
 template <typename T>
 class Singleton {
@@ -25,4 +25,4 @@ public:
     Singleton &operator=(Singleton &) = delete;
 };
 
-} // namespace scorpion
+} // namespace Scorpion

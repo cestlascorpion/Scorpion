@@ -5,7 +5,7 @@
 
 #include "BlockingQueue.h"
 
-namespace scorpion {
+namespace Scorpion {
 
 using namespace std;
 using cbType = function<int()>;
@@ -69,4 +69,4 @@ bool ThreadPool::Push(function<int()> cb) {
     return true;
 }
 
-} // namespace scorpion
+} // namespace Scorpion

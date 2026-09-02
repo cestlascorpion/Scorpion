@@ -10,7 +10,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace scorpion {
+namespace Scorpion {
 
 template <typename VALUE>
 struct Node {
@@ -121,4 +121,4 @@ int ConsistentHash<KEY, VALUE>::Get(const std::size_t &key, VALUE &value) const 
     return 0;
 }
 
-} // namespace scorpion
+} // namespace Scorpion

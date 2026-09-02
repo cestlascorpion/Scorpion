@@ -5,7 +5,7 @@
 
 #pragma once
 
-namespace scorpion {
+namespace Scorpion {
 
 template <typename TASK, typename QUEUE>
 class Worker {
@@ -37,4 +37,4 @@ public:
     virtual bool Submit(unsigned uid, TASK task) = 0;
 };
 
-} // namespace scorpion
+} // namespace Scorpion
