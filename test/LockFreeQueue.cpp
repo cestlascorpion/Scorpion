@@ -1,3 +1,5 @@
+#include <assert.h>
+
 #include <atomic>
 #include <memory>
 #include <thread>
@@ -40,6 +42,60 @@ struct TestNode {
         return *this;
     };
 };
+
+struct LifeNode {
+    static atomic<int> alive;
+
+    LifeNode() noexcept {
+        ++alive;
+    }
+    explicit LifeNode(int) noexcept {
+        ++alive;
+    }
+    LifeNode(const LifeNode &) noexcept {
+        ++alive;
+    }
+    LifeNode(LifeNode &&) noexcept {
+        ++alive;
+    }
+    LifeNode &operator=(const LifeNode &) noexcept {
+        return *this;
+    }
+    LifeNode &operator=(LifeNode &&) noexcept {
+        return *this;
+    }
+    ~LifeNode() noexcept {
+        --alive;
+    }
+};
+
+atomic<int> LifeNode::alive{0};
+
+void TestMPSCLife() {
+    {
+        MPSCQueue<LifeNode> queue;
+        LifeNode out;
+        assert(queue.TryEmplace(1));
+        assert(queue.TryPop(out));
+    }
+    assert(LifeNode::alive.load() == 0);
+
+    {
+        MPSCQueue<LifeNode> queue;
+        LifeNode out;
+        queue.Emplace(1);
+        queue.Pop(out);
+    }
+    assert(LifeNode::alive.load() == 0);
+
+    {
+        MPSCQueue<LifeNode> queue;
+        assert(queue.TryEmplace(1));
+        auto bulk = queue.TryPopBulk();
+        assert(bulk.size() == 1);
+    }
+    assert(LifeNode::alive.load() == 0);
+}
 
 template <typename Queue, typename Node, size_t P, size_t C, size_t N>
 class TestLockFreeQueueTemplate {
@@ -271,6 +327,7 @@ void TestMPSCBulk() {
 }
 
 int main() {
+    TestMPSCLife();
     TestSPSC();
     TestMPMC();
     TestMPSC();

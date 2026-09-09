@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/un.h>
 #include <unistd.h>
 
@@ -37,9 +38,22 @@ static void SetNoSigPipe(int sox) {
 #endif
 }
 
+static bool RemoveSocketPath(const char *path) {
+    struct stat info {};
+    if (lstat(path, &info) == -1) {
+        return errno == ENOENT;
+    }
+    if (!S_ISSOCK(info.st_mode)) {
+        errno = EEXIST;
+        return false;
+    }
+    return unlink(path) == 0;
+}
+
 UnixSocket::UnixSocket(const char *path)
     : _sox(-1)
-    , _path() {
+    , _path()
+    , _bound(false) {
     if (path != nullptr) {
         snprintf(_path, sizeof(_path), "%s", path);
     }
@@ -47,23 +61,19 @@ UnixSocket::UnixSocket(const char *path)
 
 UnixSocket::UnixSocket(int sox)
     : _sox(sox)
-    , _path() {
+    , _path()
+    , _bound(false) {
     if (_sox != -1) {
         SetNoSigPipe(_sox);
     }
 }
 
 UnixSocket::~UnixSocket() {
-    if (_sox != -1) {
-        close(_sox);
-    }
-    if (_path[0] != 0) {
-        unlink(_path);
-    }
+    Destroy();
 }
 
 int UnixSocket::Create() {
-    if (_sox != -1) {
+    if (_sox != -1 || _path[0] == 0 || !RemoveSocketPath(_path)) {
         return -1;
     }
     _sox = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -77,7 +87,6 @@ int UnixSocket::Create() {
     memset(&addr, 0, sizeof(addr));
     addr.sun_family = AF_UNIX;
     strncpy(addr.sun_path, _path, sizeof(addr.sun_path) - 1);
-    unlink(addr.sun_path);
 
     if (bind(_sox, (sockaddr *)&addr, (socklen_t)sizeof(addr)) == -1) {
         printf("bind error %d %s\n", errno, strerror(errno));
@@ -85,6 +94,7 @@ int UnixSocket::Create() {
         _sox = -1;
         return -1;
     }
+    _bound = true;
     return 0;
 }
 
@@ -93,9 +103,10 @@ int UnixSocket::Destroy() {
         close(_sox);
         _sox = -1;
     }
-    if (_path[0] != 0) {
-        unlink(_path);
+    if (_bound && _path[0] != 0) {
+        RemoveSocketPath(_path);
     }
+    _bound = false;
     memset(_path, 0, sizeof(_path));
     return 0;
 }

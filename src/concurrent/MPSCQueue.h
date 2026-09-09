@@ -120,6 +120,7 @@ public:
         while (head_.load(std::memory_order_acquire) == tail || !slots_[tail].ready.load(std::memory_order_acquire)) {
         }
         v = slots_[tail].Move();
+        slots_[tail].Destruct();
         slots_[tail].ready.store(false, std::memory_order_release);
         auto nextTail = (tail + 1) % capacity_;
         tail_.store(nextTail, std::memory_order_release);
@@ -135,6 +136,7 @@ public:
             return false;
         }
         v = slots_[tail].Move();
+        slots_[tail].Destruct();
         slots_[tail].ready.store(false, std::memory_order_release);
         auto nextTail = (tail + 1) % capacity_;
         tail_.store(nextTail, std::memory_order_release);
@@ -177,6 +179,7 @@ public:
             const auto index = (tail + offset) % capacity_;
             if (slots_[index].ready.load(std::memory_order_acquire)) {
                 bulk.emplace_back(slots_[index].Move());
+                slots_[index].Destruct();
                 slots_[index].ready.store(false, std::memory_order_release);
             } else {
                 break;

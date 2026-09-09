@@ -206,86 +206,59 @@ string BaseEncoding::Base32Decode(const string &str) {
         0xFF, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e,
         0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
-    size_t ilength = str.length();
-
-    // assert(((ilength % 8) == 0) && "Invalid Base32 sting!");
-    if ((ilength % 8) != 0)
+    const size_t ilength = str.length();
+    if (ilength == 0 || ilength % 8 != 0) {
         return {};
+    }
 
-    size_t olength = (ilength / 8) * 5;
+    size_t padding = 0;
+    while (padding < ilength && str[ilength - padding - 1] == '=') {
+        ++padding;
+    }
+    if (padding != 0 && padding != 1 && padding != 3 && padding != 4 && padding != 6) {
+        return {};
+    }
+    for (size_t i = 0; i < ilength - padding; ++i) {
+        if (str[i] == '=') {
+            return {};
+        }
+    }
+
+    size_t olength = ilength / 8 * 5;
+    if (padding == 1) {
+        --olength;
+    } else if (padding == 3) {
+        olength -= 2;
+    } else if (padding == 4) {
+        olength -= 3;
+    } else if (padding == 6) {
+        olength -= 4;
+    }
 
     string result;
-    result.resize(olength, 0);
-
-    for (size_t i = 0, j = 0; i < ilength;) {
-        // 8 inputs
-        uint8_t n1 = (uint8_t)str[i++];
-        uint8_t n2 = (uint8_t)str[i++];
-        uint8_t n3 = (uint8_t)str[i++];
-        uint8_t n4 = (uint8_t)str[i++];
-        uint8_t n5 = (uint8_t)str[i++];
-        uint8_t n6 = (uint8_t)str[i++];
-        uint8_t n7 = (uint8_t)str[i++];
-        uint8_t n8 = (uint8_t)str[i++];
-
-        // Validate ASCII
-        // assert(((n1 < 0x80) && (n2 < 0x80) && (n3 < 0x80) && (n4 < 0x80) && (n5 < 0x80) && (n6 < 0x80) && (n7 < 0x80)
-        // &&
-        //         (n8 < 0x80)) &&
-        //        "Invalid Base32 content!");
-        if ((n1 >= 0x80) || (n2 >= 0x80) || (n3 >= 0x80) || (n4 >= 0x80) || (n5 >= 0x80) || (n6 >= 0x80) ||
-            (n7 >= 0x80) || (n8 >= 0x80))
-            return {};
-
-        // Convert ASCII to Base32
-        n1 = base32[n1];
-        n2 = base32[n2];
-        n3 = base32[n3];
-        n4 = base32[n4];
-        n5 = base32[n5];
-        n6 = base32[n6];
-        n7 = base32[n7];
-        n8 = base32[n8];
-
-        // Validate Base32
-        // assert(((n1 <= 31) && (n2 <= 31)) && "Invalid Base32 content!");
-        if ((n1 > 31) || (n2 > 31))
-            return {};
-
-        // The following can be padding
-        // assert(((n3 <= 32) && (n4 <= 32) && (n5 <= 32) && (n6 <= 32) && (n7 <= 32) && (n8 <= 32)) &&
-        //        "Invalid Base32 content!");
-        if ((n3 > 32) || (n4 > 32) || (n5 > 32) || (n6 > 32) || (n7 > 32) || (n8 > 32))
-            return {};
-
-        // 5 outputs
-        result[j++] = ((n1 & 0x1f) << 3) | ((n2 & 0x1c) >> 2);
-        result[j++] = ((n2 & 0x03) << 6) | ((n3 & 0x1f) << 1) | ((n4 & 0x10) >> 4);
-        result[j++] = ((n4 & 0x0f) << 4) | ((n5 & 0x1e) >> 1);
-        result[j++] = ((n5 & 0x01) << 7) | ((n6 & 0x1f) << 2) | ((n7 & 0x18) >> 3);
-        result[j++] = ((n7 & 0x07) << 5) | ((n8 & 0x1f));
-
-        // Padding
-        if (n8 == 32) {
-            result.resize(result.size() - 1);
-            // assert((((n7 == 32) && (n6 == 32)) || (n7 != 32)) && "Invalid Base32 content!");
-            if (!(((n7 == 32) && (n6 == 32)) || (n7 != 32))) {
+    result.reserve(olength);
+    for (size_t i = 0; i < ilength; i += 8) {
+        uint8_t value[8]{};
+        for (size_t j = 0; j < 8; ++j) {
+            const uint8_t ch = static_cast<uint8_t>(str[i + j]);
+            if (ch == '=') {
+                continue;
+            }
+            if (ch >= 0x80 || base32[ch] > 31) {
                 return {};
             }
-            if (n6 == 32) {
-                result.resize(result.size() - 1);
-                if (n5 == 32) {
-                    result.resize(result.size() - 1);
-                    // assert((((n4 == 32) && (n3 == 32)) || (n4 != 32)) && "Invalid Base32 content!");
-                    if (!(((n4 == 32) && (n3 == 32)) || (n4 != 32))) {
-                        return {};
-                    }
-                    if (n3 == 32) {
-                        result.resize(result.size() - 1);
-                    }
-                }
-            }
+            value[j] = base32[ch];
         }
+
+        const char bytes[5] = {
+            static_cast<char>((value[0] << 3) | (value[1] >> 2)),
+            static_cast<char>((value[1] << 6) | (value[2] << 1) | (value[3] >> 4)),
+            static_cast<char>((value[3] << 4) | (value[4] >> 1)),
+            static_cast<char>((value[4] << 7) | (value[5] << 2) | (value[6] >> 3)),
+            static_cast<char>((value[6] << 5) | value[7]),
+        };
+        const size_t count = i + 8 == ilength ? olength - result.size() : 5;
+        result.append(bytes, count);
     }
 
     return result;

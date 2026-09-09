@@ -1,25 +1,38 @@
-#include <iostream>
+#include <assert.h>
+
+#include <atomic>
+#include <string>
+#include <thread>
+#include <vector>
 
 #include "Chronos.h"
 
-using namespace std;
 using namespace Scorpion;
 
 int main() {
-    auto ts = time(nullptr);
+    constexpr time_t first = 0;
+    constexpr time_t second = 2524608000;
+    const std::string firstText = "1970-01-01 00:00:00";
+    const std::string secondText = "2050-01-01 00:00:00";
+    std::atomic<bool> failed{false};
+    std::vector<std::thread> workers;
 
-    cout << TimeHelper::GetUTCDateTime(ts) << endl;
-    cout << TimeHelper::GetUTCDate(ts) << endl;
-    cout << TimeHelper::GetUTCTime(ts) << endl;
-    cout << TimeHelper::GetLocalDateTime(ts) << endl;
-    cout << TimeHelper::GetLocalDate(ts) << endl;
-    cout << TimeHelper::GetLocalTime(ts) << endl;
+    for (int id = 0; id < 16; ++id) {
+        workers.emplace_back([&, id]() {
+            const time_t value = id % 2 == 0 ? first : second;
+            const std::string &expected = id % 2 == 0 ? firstText : secondText;
+            for (int i = 0; i < 20000; ++i) {
+                if (TimeHelper::GetUTCDateTime(value) != expected) {
+                    failed.store(true);
+                    return;
+                }
+            }
+        });
+    }
+    for (auto &worker : workers) {
+        worker.join();
+    }
 
-    cout << ts << "->" << TimeHelper::GetLocalDateTime(ts) << endl;
-    cout << TimeHelper::ParseUTCDateTime(TimeHelper::GetUTCDateTime(ts)) << endl;
-    cout << TimeHelper::ParseUTCDateTime("2021-01-01", "%Y-%m-%d") << endl;
-    cout << TimeHelper::ParseLocalDateTime(TimeHelper::GetLocalDateTime(ts)) << endl;
-    cout << TimeHelper::ParseLocalDateTime("2021-01-01", "%Y-%m-%d") << endl;
-
+    assert(!failed.load());
     return 0;
 }

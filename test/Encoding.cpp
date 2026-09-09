@@ -76,6 +76,8 @@ void TestBase32() {
         string decoded = BaseEncoding::Base32Decode(encoded);
         assert(decoded == str);
     }
+    assert(BaseEncoding::Base32Decode("IE====A=").empty());
+    assert(BaseEncoding::Base32Decode("IE======IE======").empty());
     printf("TestBase32 passed\n");
 }
 

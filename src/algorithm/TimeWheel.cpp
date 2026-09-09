@@ -64,7 +64,7 @@ TimeWheelRaw::~TimeWheelRaw() = default;
 
 void TimeWheelRaw::Add(cbType cb, unsigned interval, int loop) {
     auto ticks = interval < _impl->_span ? 1u : interval / _impl->_span;
-    auto rotation = ticks / _impl->_size;
+    auto rotation = (ticks - 1) / _impl->_size;
     auto index = (_impl->_cursor + ticks % _impl->_size) % _impl->_size;
     auto event = make_unique<CEvent>(interval, rotation, loop, std::move(cb));
     _impl->_slots[index].push_back(std::move(event));

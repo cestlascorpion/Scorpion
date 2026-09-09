@@ -311,6 +311,9 @@ public:
             delete p->second;
     }
 
+    parser(const parser &) = delete;
+    parser &operator=(const parser &) = delete;
+
     void add(const std::string &name, char short_name = 0, const std::string &desc = "") {
         if (options.count(name))
             throw cmdline_error("multiple definition: " + name);

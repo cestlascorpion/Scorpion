@@ -1,10 +1,15 @@
 #include "ConsistentHash.h"
+#include "CmdLine.h"
 
 #include <iostream>
+#include <type_traits>
 #include <unordered_map>
 
 using namespace std;
 using namespace Scorpion;
+
+static_assert(!is_copy_constructible<cmdline::parser>::value, "parser must not be copyable");
+static_assert(!is_copy_assignable<cmdline::parser>::value, "parser must not be copy assignable");
 
 void testInteger() {
     unordered_map<size_t, uint32_t> hosts{{101, 0}, {102, 0}, {103, 0}, {104, 0},  {105, 0},  {106, 0},

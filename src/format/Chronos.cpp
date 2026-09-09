@@ -4,44 +4,62 @@ using namespace std;
 using namespace Scorpion;
 
 string TimeHelper::GetUTCDateTime(time_t ts) {
-    auto tm = gmtime(&ts);
+    tm value{};
+    if (gmtime_r(&ts, &value) == nullptr) {
+        return {};
+    }
     char buf[32];
-    strftime(buf, 32, "%Y-%m-%d %H:%M:%S", tm);
+    strftime(buf, 32, "%Y-%m-%d %H:%M:%S", &value);
     return string(buf);
 }
 
 string TimeHelper::GetUTCDate(time_t ts) {
-    auto tm = gmtime(&ts);
+    tm value{};
+    if (gmtime_r(&ts, &value) == nullptr) {
+        return {};
+    }
     char buf[32];
-    strftime(buf, 32, "%Y-%m-%d", tm);
+    strftime(buf, 32, "%Y-%m-%d", &value);
     return string(buf);
 }
 
 string TimeHelper::GetUTCTime(time_t ts) {
-    auto tm = gmtime(&ts);
+    tm value{};
+    if (gmtime_r(&ts, &value) == nullptr) {
+        return {};
+    }
     char buf[32];
-    strftime(buf, 32, "%H:%M:%S", tm);
+    strftime(buf, 32, "%H:%M:%S", &value);
     return string(buf);
 }
 
 string TimeHelper::GetLocalDateTime(time_t ts) {
-    auto tm = localtime(&ts);
+    tm value{};
+    if (localtime_r(&ts, &value) == nullptr) {
+        return {};
+    }
     char buf[32];
-    strftime(buf, 32, "%Y-%m-%d %H:%M:%S", tm);
+    strftime(buf, 32, "%Y-%m-%d %H:%M:%S", &value);
     return string(buf);
 }
 
 string TimeHelper::GetLocalDate(time_t ts) {
-    auto tm = localtime(&ts);
+    tm value{};
+    if (localtime_r(&ts, &value) == nullptr) {
+        return {};
+    }
     char buf[32];
-    strftime(buf, 32, "%Y-%m-%d", tm);
+    strftime(buf, 32, "%Y-%m-%d", &value);
     return string(buf);
 }
 
 string TimeHelper::GetLocalTime(time_t ts) {
-    auto tm = localtime(&ts);
+    tm value{};
+    if (localtime_r(&ts, &value) == nullptr) {
+        return {};
+    }
     char buf[32];
-    strftime(buf, 32, "%H:%M:%S", tm);
+    strftime(buf, 32, "%H:%M:%S", &value);
     return string(buf);
 }
 

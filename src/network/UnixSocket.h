@@ -40,6 +40,7 @@ protected:
 
     int _sox;
     char _path[UNIX_PATH_LIMIT];
+    bool _bound;
 };
 
 class UnixClient : public UnixSocket {
